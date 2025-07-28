@@ -34,7 +34,7 @@
   },
   "background": {
     "color": "#2896BA",
-    "transparent": true
+    "transparent": false
   },
   "linien": {
     "grenze_px": 1,
