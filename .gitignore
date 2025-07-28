@@ -1,0 +1,21 @@
+# System & IDE
+.DS_Store
+.vscode/
+Thumbs.db
+
+# Dependency folders
+node_modules/
+venv/
+GPKG/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+output/
+
+# Sensitive files
+.env
+
+# Logs
+*.log

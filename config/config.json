@@ -1,0 +1,1243 @@
+{
+  "logging": {
+    "level": "DEBUG",
+    "file": "app.log",
+    "maxBytes": 5242880,
+    "backupCount": 3,
+    "suppress_modules": [
+      "matplotlib.font_manager"
+    ]
+  },
+  "hauptland": [
+    "ADM_ADM_0",
+    "ADM_ADM_1"
+  ],
+  "nebenlaender": "ADM_ADM_0",
+  "farben": {
+    "hauptland": "#538B32",
+    "nebenland": "#969696",
+    "grenze": "#000000",
+    "highlight": "#c8d429"
+  },
+  "hervorhebung": {
+    "aktiv": true,
+    "layer": "ADM_ADM_1",
+    "namen": []
+  },
+  "karte": {
+    "breite": 1240,
+    "hoehe": 485,
+    "zoomlevel_vertikal": 0.0,
+    "zoomlevel_horizontal": 0.0,
+    "debug": true,
+    "dpi": 300
+  },
+  "background": {
+    "color": "#2896BA",
+    "transparent": true
+  },
+  "linien": {
+    "grenze_px": 1,
+    "highlight_px": 1
+  },
+  "assets": {
+    "epsg_list": "assets/epsg_list.json"
+  },
+  "scalebar": {
+    "show": true,
+    "length_fraction": 0.07,
+    "position": "bottom-left",
+    "color": "white",
+    "linewidth_px": 1.5,
+    "font_px": 16,
+    "tick_fraction": 0.05,
+    "padding_px": 20
+  },
+  "epsg_list": [
+    {
+      "land": "Afghanistan",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Ägypten",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Albanien",
+      "epsg": 5514,
+      "projektion": "Hrvatski geodetski datum 1996",
+      "hinweis": ""
+    },
+    {
+      "land": "Algerien",
+      "epsg": 3311,
+      "projektion": "Nordalgerien- Lambert",
+      "hinweis": ""
+    },
+    {
+      "land": "Andorra",
+      "epsg": 3039,
+      "projektion": "Andorra Lambert Conformal Conic",
+      "hinweis": ""
+    },
+    {
+      "land": "Angola",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Antigua und Barbuda",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Argentinien",
+      "epsg": 5341,
+      "projektion": "PSAD56 / Argentina 2",
+      "hinweis": ""
+    },
+    {
+      "land": "Armenien",
+      "epsg": 3391,
+      "projektion": "Pulkovo 1942 / Gauss-Kruger zone 8",
+      "hinweis": ""
+    },
+    {
+      "land": "Australien",
+      "epsg": 7845,
+      "projektion": "GDA2020 / MGA zone 55",
+      "hinweis": ""
+    },
+    {
+      "land": "Österreich",
+      "epsg": 31287,
+      "projektion": "MGI / Austria Lambert",
+      "hinweis": "Geeignet für gesamte Landesfläche"
+    },
+    {
+      "land": "Aserbaidschan",
+      "epsg": 5543,
+      "projektion": "Pulkovo 1942 / Gauss-Kruger zone 2",
+      "hinweis": ""
+    },
+    {
+      "land": "Bahamas",
+      "epsg": 2854,
+      "projektion": "NAD83 / Bahamas TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Bahrain",
+      "epsg": 3851,
+      "projektion": "Qatar / Bahrain Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Bangladesch",
+      "epsg": 32646,
+      "projektion": "WGS 84 / UTM zone 46N",
+      "hinweis": ""
+    },
+    {
+      "land": "Barbados",
+      "epsg": 3329,
+      "projektion": "NAD83 / Barbados TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Belarus",
+      "epsg": 5774,
+      "projektion": "ETRS89 / Lambert Azimuthal Equal Area",
+      "hinweis": ""
+    },
+    {
+      "land": "Belgien",
+      "epsg": 31370,
+      "projektion": "Belge 1972 / Belgian Lambert 72",
+      "hinweis": ""
+    },
+    {
+      "land": "Belize",
+      "epsg": 6688,
+      "projektion": "NAD83(HARN) / Belize TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Benin",
+      "epsg": 32631,
+      "projektion": "WGS 84 / UTM zone 31N",
+      "hinweis": ""
+    },
+    {
+      "land": "Bhutan",
+      "epsg": 32645,
+      "projektion": "WGS 84 / UTM zone 45N",
+      "hinweis": ""
+    },
+    {
+      "land": "Bolivien",
+      "epsg": 5471,
+      "projektion": "PSAD56 / Bolivia Provisional South America Albers",
+      "hinweis": ""
+    },
+    {
+      "land": "Bosnien und Herzegowina",
+      "epsg": 3912,
+      "projektion": "Hrvatski vojni geografski institut 1950 / Gauss-Kruger zone 5",
+      "hinweis": ""
+    },
+    {
+      "land": "Botswana",
+      "epsg": 32735,
+      "projektion": "WGS 84 / UTM zone 35S",
+      "hinweis": ""
+    },
+    {
+      "land": "Brasilien",
+      "epsg": 5880,
+      "projektion": "SIRGAS 2000 / Brazil Polyconic",
+      "hinweis": ""
+    },
+    {
+      "land": "Brunei",
+      "epsg": 3414,
+      "projektion": "RGM04 / Singapore TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Bulgarien",
+      "epsg": 3844,
+      "projektion": "Pulkovo 1942 / Gauss-Kruger zone 4",
+      "hinweis": ""
+    },
+    {
+      "land": "Burkina Faso",
+      "epsg": 32629,
+      "projektion": "WGS 84 / UTM zone 29N",
+      "hinweis": ""
+    },
+    {
+      "land": "Burundi",
+      "epsg": 32736,
+      "projektion": "WGS 84 / UTM zone 36S",
+      "hinweis": ""
+    },
+    {
+      "land": "Chile",
+      "epsg": 24842,
+      "projektion": "PSAD56 / Chile Centro",
+      "hinweis": ""
+    },
+    {
+      "land": "China",
+      "epsg": 4490,
+      "projektion": "CGCS2000 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Costa Rica",
+      "epsg": 5367,
+      "projektion": "MAGNA-SIRGAS / Costa Rica",
+      "hinweis": ""
+    },
+    {
+      "land": "Dänemark",
+      "epsg": 25832,
+      "projektion": "ETRS89 / UTM zone 32N",
+      "hinweis": "auch Infosystem Dänemark"
+    },
+    {
+      "land": "Deutschland",
+      "epsg": 25832,
+      "projektion": "ETRS89 / UTM zone 32N",
+      "hinweis": "Gängig für Nord-/Mitteldeutschland"
+    },
+    {
+      "land": "Dominica",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Dominikanische Republik",
+      "epsg": 3742,
+      "projektion": "MAGNA / UTM zone 19N",
+      "hinweis": ""
+    },
+    {
+      "land": "Ecuador",
+      "epsg": 32717,
+      "projektion": "WGS 84 / UTM zone 17S",
+      "hinweis": ""
+    },
+    {
+      "land": "El Salvador",
+      "epsg": 5368,
+      "projektion": "MAGNA-SIRGAS / El Salvador",
+      "hinweis": ""
+    },
+    {
+      "land": "Eritrea",
+      "epsg": 32736,
+      "projektion": "WGS 84 / UTM zone 36S",
+      "hinweis": ""
+    },
+    {
+      "land": "Estland",
+      "epsg": 3301,
+      "projektion": "Estonian Coordinate System of 1997",
+      "hinweis": ""
+    },
+    {
+      "land": "Eswatini",
+      "epsg": 32735,
+      "projektion": "WGS 84 / UTM zone 35S",
+      "hinweis": ""
+    },
+    {
+      "land": "Fidschi",
+      "epsg": 3414,
+      "projektion": "Fiji 1986 / Fiji Map Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Finnland",
+      "epsg": 3067,
+      "projektion": "ETRS89 / TM35FIN(E,N)",
+      "hinweis": ""
+    },
+    {
+      "land": "Frankreich",
+      "epsg": 2154,
+      "projektion": "RGF93 / Lambert-93",
+      "hinweis": ""
+    },
+    {
+      "land": "Gabun",
+      "epsg": 32732,
+      "projektion": "WGS 84 / UTM zone 32S",
+      "hinweis": ""
+    },
+    {
+      "land": "Gambia",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Georgien",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Ghana",
+      "epsg": 32630,
+      "projektion": "WGS 84 / UTM zone 30N",
+      "hinweis": ""
+    },
+    {
+      "land": "Grenada",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Griechenland",
+      "epsg": 2100,
+      "projektion": "GGRS87 / Greek Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Guatemala",
+      "epsg": 5366,
+      "projektion": "MAGNA-SIRGAS / Guatemala",
+      "hinweis": ""
+    },
+    {
+      "land": "Guinea",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Guyana",
+      "epsg": 32948,
+      "projektion": "NAD83 / Guyana TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Haiti",
+      "epsg": 3347,
+      "projektion": "NAD83 / Haiti 1927 UTM",
+      "hinweis": ""
+    },
+    {
+      "land": "Honduras",
+      "epsg": 5369,
+      "projektion": "MAGNA-SIRGAS / Honduras",
+      "hinweis": ""
+    },
+    {
+      "land": "Indien",
+      "epsg": 24375,
+      "projektion": "India / polyconic",
+      "hinweis": ""
+    },
+    {
+      "land": "Indonesien",
+      "epsg": 32748,
+      "projektion": "WGS 84 / UTM zone 48S",
+      "hinweis": ""
+    },
+    {
+      "land": "Irland",
+      "epsg": 29902,
+      "projektion": "Irish National Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Island",
+      "epsg": 3057,
+      "projektion": "ISN2004 / Lambert 1993",
+      "hinweis": ""
+    },
+    {
+      "land": "Israel",
+      "epsg": 2039,
+      "projektion": "Israel New Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Italien",
+      "epsg": 3003,
+      "projektion": "Rome 1940 / Italy zone 3",
+      "hinweis": ""
+    },
+    {
+      "land": "Jamaika",
+      "epsg": 3448,
+      "projektion": "Jamaica 1875 / Jamaica Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Japan",
+      "epsg": 3099,
+      "projektion": "Japan Plane Rectangular CS I",
+      "hinweis": ""
+    },
+    {
+      "land": "Jordanien",
+      "epsg": 102026,
+      "projektion": "NAD_1983_StatePlane_Jordan_FIPS_3702",
+      "hinweis": ""
+    },
+    {
+      "land": "Kambodscha",
+      "epsg": 32648,
+      "projektion": "WGS 84 / UTM zone 48N",
+      "hinweis": ""
+    },
+    {
+      "land": "Kamerun",
+      "epsg": 32732,
+      "projektion": "WGS 84 / UTM zone 32S",
+      "hinweis": ""
+    },
+    {
+      "land": "Kanada",
+      "epsg": 3978,
+      "projektion": "Canada Lambert Conformal Conic",
+      "hinweis": ""
+    },
+    {
+      "land": "Kap Verde",
+      "epsg": 32626,
+      "projektion": "WGS 84 / UTM zone 26N",
+      "hinweis": ""
+    },
+    {
+      "land": "Kasachstan",
+      "epsg": 3389,
+      "projektion": "GSK-2011 / Gauss-Kruger zone 6",
+      "hinweis": ""
+    },
+    {
+      "land": "Katar",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Kenia",
+      "epsg": 32737,
+      "projektion": "WGS 84 / UTM zone 37S",
+      "hinweis": ""
+    },
+    {
+      "land": "Kirgisistan",
+      "epsg": 8194,
+      "projektion": "Pulkovo 1942 / Gauss-Kruger zone 5",
+      "hinweis": ""
+    },
+    {
+      "land": "Kiribati",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Kolumbien",
+      "epsg": 3116,
+      "projektion": "MAGNA-SIRGAS / Colombia Bogota",
+      "hinweis": ""
+    },
+    {
+      "land": "Komoren",
+      "epsg": 32739,
+      "projektion": "WGS 84 / UTM zone 39S",
+      "hinweis": ""
+    },
+    {
+      "land": "Kongo (Brazzaville)",
+      "epsg": 102023,
+      "projektion": "WGS 84 / UTM zone 33S",
+      "hinweis": ""
+    },
+    {
+      "land": "Kongo (Kinshasa)",
+      "epsg": 102024,
+      "projektion": "WGS 84 / UTM zone 34S",
+      "hinweis": ""
+    },
+    {
+      "land": "Kuba",
+      "epsg": 32617,
+      "projektion": "WGS 84 / UTM zone 17N",
+      "hinweis": ""
+    },
+    {
+      "land": "Kuwait",
+      "epsg": 32638,
+      "projektion": "WGS 84 / UTM zone 38N",
+      "hinweis": ""
+    },
+    {
+      "land": "Laos",
+      "epsg": 32648,
+      "projektion": "WGS 84 / UTM zone 48N",
+      "hinweis": ""
+    },
+    {
+      "land": "Lesotho",
+      "epsg": 32735,
+      "projektion": "WGS 84 / UTM zone 35S",
+      "hinweis": ""
+    },
+    {
+      "land": "Lettland",
+      "epsg": 3059,
+      "projektion": "LKS92 / Latvia TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Libanon",
+      "epsg": 2249,
+      "projektion": "Beirut 1972 / Lebanon Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Liberia",
+      "epsg": 32630,
+      "projektion": "WGS 84 / UTM zone 30N",
+      "hinweis": ""
+    },
+    {
+      "land": "Libyen",
+      "epsg": 2463,
+      "projektion": "Libya Zone 3",
+      "hinweis": ""
+    },
+    {
+      "land": "Liechtenstein",
+      "epsg": 3034,
+      "projektion": "ETRS89 / LAEA Europe",
+      "hinweis": ""
+    },
+    {
+      "land": "Litauen",
+      "epsg": 3346,
+      "projektion": "LKS94 / Lithuania TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Luxemburg",
+      "epsg": 3035,
+      "projektion": "ETRS89 / LAEA Europe",
+      "hinweis": ""
+    },
+    {
+      "land": "Madagaskar",
+      "epsg": 32738,
+      "projektion": "WGS 84 / UTM zone 38S",
+      "hinweis": ""
+    },
+    {
+      "land": "Malawi",
+      "epsg": 32736,
+      "projektion": "WGS 84 / UTM zone 36S",
+      "hinweis": ""
+    },
+    {
+      "land": "Malaysia",
+      "epsg": 3395,
+      "projektion": "WGS 84 / World Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Malediven",
+      "epsg": 4536,
+      "projektion": "WGS 84 / UTM zone 42N",
+      "hinweis": ""
+    },
+    {
+      "land": "Mali",
+      "epsg": 32629,
+      "projektion": "WGS 84 / UTM zone 29N",
+      "hinweis": ""
+    },
+    {
+      "land": "Malta",
+      "epsg": 3003,
+      "projektion": "Rome 1940 / Italy zone 3",
+      "hinweis": ""
+    },
+    {
+      "land": "Marokko",
+      "epsg": 3801,
+      "projektion": "RGM04 / Morocco National",
+      "hinweis": ""
+    },
+    {
+      "land": "Marshallinseln",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Mauretanien",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Mauritius",
+      "epsg": 32658,
+      "projektion": "WGS 84 / UTM zone 58S",
+      "hinweis": ""
+    },
+    {
+      "land": "Mexiko",
+      "epsg": 6372,
+      "projektion": "NAD83 / Mexico I",
+      "hinweis": ""
+    },
+    {
+      "land": "Mikronesien",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Moldawien",
+      "epsg": 3844,
+      "projektion": "Pulkovo 1942 / Gauss-Kruger zone 4",
+      "hinweis": ""
+    },
+    {
+      "land": "Monaco",
+      "epsg": 3396,
+      "projektion": "WGS 84 / World Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Mongolei",
+      "epsg": 32648,
+      "projektion": "WGS 84 / UTM zone 48N",
+      "hinweis": ""
+    },
+    {
+      "land": "Montenegro",
+      "epsg": 3814,
+      "projektion": "HTRS07 / Croatia TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Mosambik",
+      "epsg": 32736,
+      "projektion": "WGS 84 / UTM zone 36S",
+      "hinweis": ""
+    },
+    {
+      "land": "Myanmar",
+      "epsg": 32647,
+      "projektion": "WGS 84 / UTM zone 47N",
+      "hinweis": ""
+    },
+    {
+      "land": "Namibia",
+      "epsg": 32733,
+      "projektion": "WGS 84 / UTM zone 33S",
+      "hinweis": ""
+    },
+    {
+      "land": "Nauru",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Nepal",
+      "epsg": 32645,
+      "projektion": "WGS 84 / UTM zone 45N",
+      "hinweis": ""
+    },
+    {
+      "land": "Neuseeland",
+      "epsg": 2193,
+      "projektion": "NZGD2000 / New Zealand Transverse Mercator 2000",
+      "hinweis": ""
+    },
+    {
+      "land": "Nicaragua",
+      "epsg": 5360,
+      "projektion": "MAGNA-SIRGAS / Nicaragua",
+      "hinweis": ""
+    },
+    {
+      "land": "Niederlande",
+      "epsg": 28992,
+      "projektion": "Amersfoort / RD New",
+      "hinweis": ""
+    },
+    {
+      "land": "Niger",
+      "epsg": 32633,
+      "projektion": "WGS 84 / UTM zone 33N",
+      "hinweis": ""
+    },
+    {
+      "land": "Nigeria",
+      "epsg": 26391,
+      "projektion": "NAD83 / UTM zone 31N",
+      "hinweis": ""
+    },
+    {
+      "land": "Nordmazedonien",
+      "epsg": 5312,
+      "projektion": "Macedonian TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Norwegen",
+      "epsg": 25833,
+      "projektion": "ETRS89 / UTM zone 33N",
+      "hinweis": ""
+    },
+    {
+      "land": "Oman",
+      "epsg": 3855,
+      "projektion": "WGS 84 / UTM zone 40N",
+      "hinweis": ""
+    },
+    {
+      "land": "Pakistan",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Panama",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Papua-Neuguinea",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Paraguay",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Peru",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Philippinen",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Polen",
+      "epsg": 2180,
+      "projektion": "ETRS89 / Poland CS2000 zone 7",
+      "hinweis": ""
+    },
+    {
+      "land": "Portugal",
+      "epsg": 3763,
+      "projektion": "ETRS89 / Portugal TM06",
+      "hinweis": ""
+    },
+    {
+      "land": "Qatar",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Rumänien",
+      "epsg": 31700,
+      "projektion": "Pulkovo 1942 / Stereo 70",
+      "hinweis": ""
+    },
+    {
+      "land": "Russland",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Ruanda",
+      "epsg": 32635,
+      "projektion": "WGS 84 / UTM zone 35S",
+      "hinweis": ""
+    },
+    {
+      "land": "St. Kitts und Nevis",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "St. Lucia",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "St. Vincent und die Grenadinen",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Samoa",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "San Marino",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Sao Tome und Principe",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Saudi-Arabien",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Senegal",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Serbien",
+      "epsg": 7779,
+      "projektion": "GDA2020 / MGA zone 58",
+      "hinweis": ""
+    },
+    {
+      "land": "Seychellen",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Sierra Leone",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Singapur",
+      "epsg": 3414,
+      "projektion": "SVY21 / Singapore TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Slowakei",
+      "epsg": 5513,
+      "projektion": "Slovak National Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Slowenien",
+      "epsg": 3912,
+      "projektion": "Slovenia 1996 / Slovakia National Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Salomonen",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Somalia",
+      "epsg": 32638,
+      "projektion": "WGS 84 / UTM zone 38N",
+      "hinweis": ""
+    },
+    {
+      "land": "Südafrika",
+      "epsg": 2054,
+      "projektion": "South African 1999 / Lo30",
+      "hinweis": ""
+    },
+    {
+      "land": "Südsudan",
+      "epsg": 32636,
+      "projektion": "WGS 84 / UTM zone 36N",
+      "hinweis": ""
+    },
+    {
+      "land": "Spanien",
+      "epsg": 25830,
+      "projektion": "ETRS89 / UTM zone 30N",
+      "hinweis": ""
+    },
+    {
+      "land": "Sri Lanka",
+      "epsg": 5235,
+      "projektion": "Indian 1975 / UTM zone 44N",
+      "hinweis": ""
+    },
+    {
+      "land": "Sudan",
+      "epsg": 32637,
+      "projektion": "WGS 84 / UTM zone 37N",
+      "hinweis": ""
+    },
+    {
+      "land": "Suriname",
+      "epsg": 3328,
+      "projektion": "WGS 84 / Suriname TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Schweden",
+      "epsg": 3006,
+      "projektion": "SWEREF99 TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Syrien",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Tadschikistan",
+      "epsg": 32642,
+      "projektion": "WGS 84 / UTM zone 42N",
+      "hinweis": ""
+    },
+    {
+      "land": "Tansania",
+      "epsg": 32737,
+      "projektion": "WGS 84 / UTM zone 37S",
+      "hinweis": ""
+    },
+    {
+      "land": "Thailand",
+      "epsg": 32647,
+      "projektion": "WGS 84 / UTM zone 47N",
+      "hinweis": ""
+    },
+    {
+      "land": "Togo",
+      "epsg": 32630,
+      "projektion": "WGS 84 / UTM zone 30N",
+      "hinweis": ""
+    },
+    {
+      "land": "Tonga",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Trinidad und Tobago",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Tunesien",
+      "epsg": 32632,
+      "projektion": "WGS 84 / UTM zone 32N",
+      "hinweis": ""
+    },
+    {
+      "land": "Türkei",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Turkmenistan",
+      "epsg": 32642,
+      "projektion": "WGS 84 / UTM zone 42N",
+      "hinweis": ""
+    },
+    {
+      "land": "Tuvalu",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Uganda",
+      "epsg": 32636,
+      "projektion": "WGS 84 / UTM zone 36N",
+      "hinweis": ""
+    },
+    {
+      "land": "Ukraine",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Vereinigte Arabische Emirate",
+      "aliases": [
+        "VAE",
+        "UAE"
+      ],
+      "epsg": 3855,
+      "projektion": "WGS 84 / UTM zone 40N",
+      "hinweis": ""
+    },
+    {
+      "land": "Vereinigtes Königreich",
+      "aliases": [
+        "UK",
+        "GB",
+        "England",
+        "Schottland",
+        "Wales",
+        "Nordirland"
+      ],
+      "epsg": 27700,
+      "projektion": "OSGB36 / British National Grid",
+      "hinweis": ""
+    },
+    {
+      "land": "Vereinigte Staaten",
+      "aliases": [
+        "USA"
+      ],
+      "epsg": 2163,
+      "projektion": "US National Atlas Equal Area",
+      "hinweis": ""
+    },
+    {
+      "land": "Uruguay",
+      "epsg": 53003,
+      "projektion": "UTM zone 21S",
+      "hinweis": ""
+    },
+    {
+      "land": "Usbekistan",
+      "epsg": 32642,
+      "projektion": "WGS 84 / UTM zone 42N",
+      "hinweis": ""
+    },
+    {
+      "land": "Vanuatu",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Vatikanstadt",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Venezuela",
+      "epsg": 5364,
+      "projektion": "PSAD56 / Venezuela Centro",
+      "hinweis": ""
+    },
+    {
+      "land": "Vietnam",
+      "epsg": 3405,
+      "projektion": "VN-2000 / TM-3 zone 107",
+      "hinweis": ""
+    },
+    {
+      "land": "Jemen",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Sambia",
+      "epsg": 32735,
+      "projektion": "WGS 84 / UTM zone 35S",
+      "hinweis": ""
+    },
+    {
+      "land": "Simbabwe",
+      "epsg": 32736,
+      "projektion": "WGS 84 / UTM zone 36S",
+      "hinweis": ""
+    },
+    {
+      "land": "Côte d'Ivoire",
+      "epsg": 32630,
+      "projektion": "WGS 84 / UTM zone 30N",
+      "hinweis": ""
+    },
+    {
+      "land": "Djibouti",
+      "epsg": 32638,
+      "projektion": "WGS 84 / UTM zone 38N",
+      "hinweis": ""
+    },
+    {
+      "land": "Äquatorialguinea",
+      "epsg": 32632,
+      "projektion": "WGS 84 / UTM zone 32N",
+      "hinweis": ""
+    },
+    {
+      "land": "Guinea-Bissau",
+      "epsg": 32628,
+      "projektion": "WGS 84 / UTM zone 28N",
+      "hinweis": ""
+    },
+    {
+      "land": "Tschad",
+      "epsg": 32633,
+      "projektion": "WGS 84 / UTM zone 33N",
+      "hinweis": ""
+    },
+    {
+      "land": "Zentralafrikanische Republik",
+      "epsg": 32633,
+      "projektion": "WGS 84 / UTM zone 33N",
+      "hinweis": ""
+    },
+    {
+      "land": "Kroatien",
+      "epsg": 3765,
+      "projektion": "HTRS96 / Croatia TM",
+      "hinweis": ""
+    },
+    {
+      "land": "Tschechien",
+      "epsg": 5514,
+      "projektion": "S-JTSK / Krovak East North",
+      "hinweis": ""
+    },
+    {
+      "land": "Ungarn",
+      "epsg": 23700,
+      "projektion": "Hungarian Datum 1972 / EOV",
+      "hinweis": ""
+    },
+    {
+      "land": "Zypern",
+      "epsg": 3879,
+      "projektion": "GRS 1980 / Cyprus Lambert",
+      "hinweis": ""
+    },
+    {
+      "land": "Timor-Leste",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Nordkorea",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Südkorea",
+      "epsg": 5179,
+      "projektion": "Korean 2000 / Unified CS",
+      "hinweis": ""
+    },
+    {
+      "land": "Irak",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Iran",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Palau",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    },
+    {
+      "land": "Kosovo",
+      "epsg": 3857,
+      "projektion": "WGS 84 / Pseudo-Mercator",
+      "hinweis": ""
+    },
+    {
+      "land": "Niue",
+      "epsg": 4326,
+      "projektion": "WGS 84 / geographic",
+      "hinweis": ""
+    }
+  ]
+}
