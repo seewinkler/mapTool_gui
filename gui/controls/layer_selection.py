@@ -5,6 +5,14 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+
+def toggle_item_check(item):
+    if item.checkState() == Qt.Checked:
+        item.setCheckState(Qt.Unchecked)
+    else:
+        item.setCheckState(Qt.Checked)
+
+
 class LayerSelectionGroup(QGroupBox):
     """
     GroupBox für Layer-Listen:
@@ -18,7 +26,7 @@ class LayerSelectionGroup(QGroupBox):
 
         outer = QVBoxLayout(self)
         outer.setSpacing(10)
-
+      
         # Layer-Bereich
         lbl_layer = QLabel("Ausgewählter Layer")
         lbl_layer.setStyleSheet("font-weight: bold;")
@@ -55,3 +63,7 @@ class LayerSelectionGroup(QGroupBox):
         row.addLayout(col_high)
 
         outer.addLayout(row)
+        
+        self.lst_layers.itemClicked.connect(toggle_item_check)
+        self.lst_hide.itemClicked.connect(toggle_item_check)
+        self.lst_high.itemClicked.connect(toggle_item_check)
