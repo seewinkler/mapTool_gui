@@ -34,7 +34,7 @@
   },
   "background": {
     "color": "#2896BA",
-    "transparent": false
+    "transparent": true
   },
   "linien": {
     "grenze_px": 1,
@@ -1239,5 +1239,16 @@
       "projektion": "WGS 84 / geographic",
       "hinweis": ""
     }
-  ]
+  ],
+  "hide_cfg": {
+    "aktiv": false,
+    "bereiche": {
+      "ADM_ADM_2": []
+    }
+  },
+  "highlight_cfg": {
+    "aktiv": false,
+    "layer": "ADM_ADM_2",
+    "namen": []
+  }
 }

@@ -33,7 +33,6 @@ def add_scalebar(ax, extent, src_crs, config):
     if not scalebar_cfg.get("show", False):
         return
     color = scalebar_cfg.get("color", "#000000")
-    print(">> Verwende Scalebar-Farbe:", color)  # Debug-Ausgabe
 
     # 1) Map-Breiten-Länge in Meter ermitteln
     crs_obj = CRS.from_user_input(src_crs)

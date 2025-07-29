@@ -2,34 +2,48 @@
 
 import logging
 from typing import List, Dict
-from PySide6.QtCore import Qt
+
+from PySide6.QtCore    import Qt
 from PySide6.QtWidgets import QListWidgetItem
+
 from data_processing.layers import merge_hauptland_layers
 
-class LayerController:
-    def __init__(self, composer, view):
-        self.composer   = composer
-        self.view       = view
-        self._gdf_main  = None
 
-    def handle_primary_selection(self):
-        # 1) Auswahl ermitteln
+class LayerController:
+    """
+    Steuert die Auswahl der Haupt-Layer sowie
+    das Ein-/Ausblenden und Hervorheben von Regionen.
+    """
+
+    def __init__(self, composer, view):
+        self.composer  = composer
+        self.view      = view
+        self._gdf_main = None
+        self._name_col = None
+
+    def handle_primary_selection(self, item: QListWidgetItem) -> None:
+        """
+        Wird aufgerufen, wenn in lst_layers ein Layer
+        angehakt oder abgehakt wird.
+        """
+        # 1) Alle aktuell angehakten Haupt-Layer
         sel = [
             self.view.lst_layers.item(i).text()
             for i in range(self.view.lst_layers.count())
             if self.view.lst_layers.item(i).checkState() == Qt.Checked
         ]
-        if not sel:
-            # keine Auswahl → alle aktivieren
-            sel = [
-                self.view.lst_layers.item(i).text()
-                for i in range(self.view.lst_layers.count())
-            ]
 
-        # 2) Composer updaten
+        # Composer updaten (auch bei leerer Selektion)
         self.composer.set_primary_layers(sel)
 
-        # 3) Haupt-GDF neu laden
+        # Wenn nichts angehakt, leere hide/high-Listen und Canvas
+        if not sel:
+            self.view.lst_hide.clear()
+            self.view.lst_high.clear()
+            self.view.map_canvas.refresh()
+            return
+
+        # 2) GDF der gewählten Haupt-Layer laden
         try:
             gdf = merge_hauptland_layers(
                 self.composer.main_gpkg,
@@ -42,62 +56,107 @@ class LayerController:
             logging.error("Fehler beim Laden des Haupt-Layers: %s", e)
             return
 
-        # nur __is_main-Features merken
+        # nur die '__is_main' Features behalten
         if "__is_main" in gdf.columns:
             self._gdf_main = gdf[gdf["__is_main"]]
         else:
             self._gdf_main = gdf.copy()
 
-        # 4) Hide/Highlight-Listen befüllen
-        unique_names = sorted(self._gdf_main["NAME_1"].unique())
+        # 3) Dynamisch ermitteln, welche 'NAME_x'-Spalte genutzt wird
+        layer = sel[0]
+        lvl   = layer.split("_")[-1]
+        col   = f"NAME_{lvl}"
+        if col not in self._gdf_main.columns:
+            # Fallback: erste Spalte, die mit 'NAME_' beginnt
+            candidates = [c for c in self._gdf_main.columns if c.startswith("NAME_")]
+            col = candidates[0] if candidates else None
+        self._name_col = col
+
+        # 4) Einträge extrahieren und in Listen packen
+        if self._name_col:
+            raw = (
+                self._gdf_main[self._name_col]
+                .dropna()
+                .astype(str)
+                .unique()
+            )
+            unique_names = sorted(raw)
+        else:
+            logging.warning("Kein NAME_-Feld gefunden für Layer '%s'", layer)
+            unique_names = []
+
+        # 5) Hide- und Highlight-Listen befüllen
         self.view.lst_hide.clear()
         self.view.lst_high.clear()
         for name in unique_names:
-            # Hide
-            item_h = QListWidgetItem(name)
-            item_h.setFlags(item_h.flags() | Qt.ItemIsUserCheckable)
-            item_h.setCheckState(Qt.Unchecked)
-            self.view.lst_hide.addItem(item_h)
-            # Highlight
-            item_x = QListWidgetItem(name)
-            item_x.setFlags(item_x.flags() | Qt.ItemIsUserCheckable)
-            item_x.setCheckState(Qt.Unchecked)
-            self.view.lst_high.addItem(item_x)
+            # Ausblenden
+            h_item = QListWidgetItem(name)
+            h_item.setFlags(h_item.flags() | Qt.ItemIsUserCheckable)
+            h_item.setCheckState(Qt.Unchecked)
+            self.view.lst_hide.addItem(h_item)
 
-        # 5) Refresh
+            # Hervorheben
+            x_item = QListWidgetItem(name)
+            x_item.setFlags(x_item.flags() | Qt.ItemIsUserCheckable)
+            x_item.setCheckState(Qt.Unchecked)
+            self.view.lst_high.addItem(x_item)
+
+        # 6) Vorschau neu zeichnen
         self.view.map_canvas.refresh()
 
-    def handle_hide_changed(self):
-        # ausgeblendete Regionen
+    def handle_hide_changed(self, item: QListWidgetItem) -> None:
+        """
+        Wird aufgerufen, wenn in lst_hide eine Region
+        ange- oder abgehakt wird. Aktualisiert Highlight-Liste
+        und die Karte.
+        """
+        # 1) Ausgeblendete Regionen sammeln
         hide_list = [
             self.view.lst_hide.item(i).text()
             for i in range(self.view.lst_hide.count())
             if self.view.lst_hide.item(i).checkState() == Qt.Checked
         ]
-        layer = self.composer.primary_layers[0] if self.composer.primary_layers else ""
-        hide_map: Dict[str, List[str]] = {layer: hide_list}
-        self.composer.set_hide(hide_map)
 
-        # Highlight-Liste neu generieren
+        # 2) Composer informieren
+        layer = (
+            self.composer.primary_layers[0]
+            if self.composer.primary_layers else ""
+        )
+        self.composer.set_hide({layer: hide_list})
+
+        # 3) Highlight-Liste basierend auf hide_list neu befüllen
         self.view.lst_high.clear()
-        remaining = [
-            name for name in self._gdf_main["NAME_1"].unique()
-            if name not in hide_list
-        ]
-        for name in sorted(remaining):
-            item = QListWidgetItem(name)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Unchecked)
-            self.view.lst_high.addItem(item)
+        if self._name_col:
+            raw = (
+                self._gdf_main[self._name_col]
+                .dropna()
+                .astype(str)
+                .unique()
+            )
+            remaining = [n for n in raw if n not in hide_list]
+            for name in sorted(remaining):
+                item = QListWidgetItem(name)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setCheckState(Qt.Unchecked)
+                self.view.lst_high.addItem(item)
 
+        # 4) Karte neu zeichnen
         self.view.map_canvas.refresh()
 
-    def handle_highlight_changed(self):
+    def handle_highlight_changed(self, item: QListWidgetItem) -> None:
+        """
+        Wird aufgerufen, wenn in lst_high eine Region
+        ange- oder abgehakt wird. Aktualisiert Hervorhebung
+        in der Karte.
+        """
         hl = [
             self.view.lst_high.item(i).text()
             for i in range(self.view.lst_high.count())
             if self.view.lst_high.item(i).checkState() == Qt.Checked
         ]
-        layer = self.composer.primary_layers[0] if self.composer.primary_layers else ""
+        layer = (
+            self.composer.primary_layers[0]
+            if self.composer.primary_layers else ""
+        )
         self.composer.set_highlight(layer, hl)
         self.view.map_canvas.refresh()
