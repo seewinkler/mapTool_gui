@@ -1,7 +1,9 @@
 import sys
 import os
 
-print("▶ Starte GUI-EntryPoint aus", __file__)
+# "ALL_CPUS" oder eine Zahl, z. B. "8"
+os.environ["GDAL_NUM_THREADS"] = "ALL_CPUS"
+os.environ["OGR_NUM_THREADS"]  = "ALL_CPUS"
 
 # Projekt-Root ins sys.path (damit gui/ und utils/ als Packages erkannt werden)
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
