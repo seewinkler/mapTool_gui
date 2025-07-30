@@ -1,3 +1,5 @@
+# scalebar.py
+
 import numpy as np
 from pyproj import CRS, Transformer
 
@@ -23,18 +25,16 @@ def nice_number(x: float) -> float:
 
 def add_scalebar(ax, extent, src_crs, config):
     """
-    Zeichnet eine Scalebar in Achsenkoordinaten.
+    Zeichnet eine dynamisch skalierte Scalebar in Achsenkoordinaten.
     extent: [xmin, xmax, ymin, ymax] in Daten-Koordinaten
     src_crs: CRS-String oder EPSG-Code der Daten
-    config: gesamt geladenes Config-Dict (enthält scalebar- und karte-Sektion)
+    config: gesamtes Config-Dict (enthält scalebar- und karte-Sektion)
     """
     scalebar_cfg = config.get("scalebar", {})
-    karte_cfg    = config.get("karte", {})
     if not scalebar_cfg.get("show", False):
         return
-    color = scalebar_cfg.get("color", "#000000")
 
-    # 1) Map-Breiten-Länge in Meter ermitteln
+    # 1) Kartenbreite in Meter berechnen
     crs_obj = CRS.from_user_input(src_crs)
     if crs_obj.is_geographic:
         transformer = Transformer.from_crs(crs_obj, "EPSG:3857", always_xy=True)
@@ -44,28 +44,43 @@ def add_scalebar(ax, extent, src_crs, config):
         xmin_m, xmax_m, ymin_m, ymax_m = extent
     map_width_m = xmax_m - xmin_m
 
-    # 2) Roh-Länge & „schöne“ Länge
-    frac_cfg    = scalebar_cfg.get("length_fraction", 0.07)
-    raw_len_m   = map_width_m * frac_cfg
-    nice_len_m  = nice_number(raw_len_m)
-    frac_nice   = nice_len_m / map_width_m
+    # 2) Achsenabmessungen in Pixel
+    fig  = ax.figure
+    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    axes_w_px = bbox.width  * fig.dpi
+    axes_h_px = bbox.height * fig.dpi
 
-    # 3) Label generieren
+    # 3) Roh-Pixel-Länge & clamp zwischen min/max
+    frac_cfg = scalebar_cfg.get("length_fraction", 0.07)
+    raw_px   = frac_cfg * axes_w_px
+    min_px   = scalebar_cfg.get("min_length_px", 50)
+    max_px   = scalebar_cfg.get("max_length_px", 200)
+    target_px = max(min(raw_px, max_px), min_px)
+
+    # 4) Zurück in Meter + „schöne“ Länge finden
+    target_m  = (target_px / axes_w_px) * map_width_m
+    nice_len_m = nice_number(target_m)
+    frac_nice  = nice_len_m / map_width_m
+
+    # 5) Label (m oder km)
     if nice_len_m >= 1000:
         label = f"{int(nice_len_m/1000)} km"
     else:
         label = f"{int(nice_len_m)} m"
 
-    # 4) Stift- und Schriftgrößen in pt berechnen
-    dpi          = ax.figure.dpi or karte_cfg.get("dpi", 72)
-    lw_px        = scalebar_cfg.get("linewidth_px", 1)
-    font_px      = scalebar_cfg.get("font_px", 8)
-    lw_pt        = pixel_to_pt(lw_px, dpi)
-    font_pt      = pixel_to_pt(font_px, dpi)
-    color        = scalebar_cfg.get("color", "black")
-    tick_frac    = scalebar_cfg.get("tick_fraction", 0.05)
+    # 6) Stift- und Schriftgrößen in pt
+    dpi      = fig.dpi or scalebar_cfg.get("dpi", 72)
+    lw_px    = scalebar_cfg.get("linewidth_px", 1.5)
+    font_px  = scalebar_cfg.get("font_px", 16)
+    lw_pt    = pixel_to_pt(lw_px, dpi)
+    font_pt  = pixel_to_pt(font_px, dpi)
+    color    = scalebar_cfg.get("color", "black")
+    tick_frac = scalebar_cfg.get("tick_fraction", 0.05)
+    pad_px   = scalebar_cfg.get("padding_px", 20)
+    pad_x    = pad_px / axes_w_px
+    pad_y    = pad_px / axes_h_px
 
-    # 5) Position in Achsen-Koordinaten + Randabstand
+    # 7) Position in Achsen-Koordinaten wählen
     pos_map = {
         "bottom-left":   (0.05, 0.05),
         "bottom-center": (0.50, 0.05),
@@ -74,23 +89,10 @@ def add_scalebar(ax, extent, src_crs, config):
         "top-center":    (0.50, 0.95),
         "top-right":     (0.95, 0.95),
     }
-    x0, y0 = pos_map.get(scalebar_cfg.get("position", "bottom-right"), (0.05, 0.05))
+    x0, y0 = pos_map.get(scalebar_cfg.get("position", "bottom-right"),
+                         (0.05, 0.05))
 
-    # 5b) Padding in Achsenkoordinaten berechnen
-    fig = ax.figure
-    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    width_inch  = bbox.width
-    height_inch = bbox.height
-    dpi         = fig.dpi
-
-    canvas_w_px = width_inch  * dpi
-    canvas_h_px = height_inch * dpi
-
-    pad_px = scalebar_cfg.get("padding_px", 20)
-    pad_x  = pad_px / canvas_w_px
-    pad_y  = pad_px / canvas_h_px
-
-    # 5c) Korrigieren der Position bei Randnähe
+    # 8) Randabstand und Überlauf korrigieren
     if x0 + frac_nice > 1.0 - pad_x:
         x0 = 1.0 - frac_nice - pad_x
     if x0 < pad_x:
@@ -100,8 +102,7 @@ def add_scalebar(ax, extent, src_crs, config):
     if y0 > 1.0 - pad_y:
         y0 = 1.0 - pad_y
 
-    # 6) Zeichnen: Hauptlinie + Endticks
-    # Linie
+    # 9) Zeichnen: Linie
     ax.plot(
         [x0, x0 + frac_nice],
         [y0, y0],
@@ -111,7 +112,8 @@ def add_scalebar(ax, extent, src_crs, config):
         solid_capstyle="butt",
         zorder=5
     )
-    # Ticks
+
+    # 10) End-Ticks
     tick_h = tick_frac * frac_nice
     for xx in (x0, x0 + frac_nice):
         ax.plot(
@@ -123,7 +125,7 @@ def add_scalebar(ax, extent, src_crs, config):
             zorder=5
         )
 
-    # 7) Label über der Linie
+    # 11) Beschriftung
     ax.text(
         x0 + frac_nice / 2,
         y0 + tick_h * 1.5,
