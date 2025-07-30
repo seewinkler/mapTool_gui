@@ -14,8 +14,6 @@ from utils.autocomplete import setup_autocomplete
 import logging
 
 logger = logging.getLogger("gui.auswahlfenster")
-print("▶ gui/auswahlfenster.py wird geladen")
-
 
 class AuswahlFenster(QDialog):
     """
