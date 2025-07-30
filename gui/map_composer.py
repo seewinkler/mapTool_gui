@@ -2,6 +2,8 @@
 
 from io import BytesIO
 from typing import List, Optional, Dict
+from pathlib import Path
+
 from PIL import Image
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -23,8 +25,6 @@ class MapComposer:
         self.config = config
         self.crs = crs or config.get("crs", "EPSG:3857")
 
-        # … restliche Felder unverändert …
-
         # Dimensionen
         karte_cfg = config.get("karte", {})
         ui_cfg    = config.get("ui", {})
@@ -34,7 +34,7 @@ class MapComposer:
         # Scalebar
         self.scalebar_cfg = config.get("scalebar", {"show": False})
 
-        # Hintergrund: NUN aus config["background"]
+        # Hintergrund
         bg_cfg = config.get("background", {})
         self.background_cfg = {
             "color":       bg_cfg.get("color", "#ffffff"),
@@ -44,9 +44,8 @@ class MapComposer:
         # Export-Formate
         self.export_formats = config.get("export", {}).get("formats", ["png"])
 
-        # Layer-Filter initialisieren
+        # Hide- und Highlight-Configs
         self.hide_cfg = config.get("hide_cfg", {}) or {"aktiv": False, "bereiche": {}}
-        # highlight_cfg könnte als "highlight_cfg" in der config stehen
         self.hl_cfg   = config.get("highlight_cfg", {}) or {"aktiv": False, "layer": None, "namen": []}
 
     # ---------- Setter-Methoden ----------
@@ -104,8 +103,6 @@ class MapComposer:
         """
         Lädt Haupt- und Neben-GPKGs, merged deren GeoDataFrames
         und liefert ein kombiniertes GeoDataFrame zurück.
-        Haupt-GPKG-Features bekommen __is_main=True,
-        Neben-GPKGs __is_main=False.
         """
         if not getattr(self, "main_gpkg", None):
             return None
@@ -128,10 +125,7 @@ class MapComposer:
             if not sub:
                 continue
 
-            layers = get_simplest_layer(sub)
-            if not layers:
-                layers = [self.primary_layers[0]]
-
+            layers = get_simplest_layer(sub) or [self.primary_layers[0]]
             sub_gdf = merge_hauptland_layers(
                 sub,
                 layers,
@@ -183,9 +177,9 @@ class MapComposer:
         )
 
         # UI-Overrides synchronisieren
-        builder.width_px    = self.width_px
-        builder.height_px   = self.height_px
-        builder.background  = self.background_cfg
+        builder.width_px     = self.width_px
+        builder.height_px    = self.height_px
+        builder.background   = self.background_cfg
         builder.scalebar_cfg = self.scalebar_cfg
 
         return builder.build_figure()
@@ -201,6 +195,25 @@ class MapComposer:
             output,
             self.export_formats,
             transparent=self.background_cfg["transparent"],
+        )
+
+    def compose_and_save_dialog(
+        self,
+        parent=None,
+        initial_dir: str = "output"
+    ) -> Optional[Path]:
+        """
+        Öffnet einen Save-Dialog im initial_dir,
+        speichert die Figure und öffnet danach den Explorer/Finder.
+        Gibt den Pfad zur gespeicherten Datei zurück oder None.
+        """
+        fig = self.compose()
+        return MapExporter.save_with_dialog(
+            fig,
+            self.export_formats,
+            transparent=self.background_cfg["transparent"],
+            parent=parent,
+            initial_dir=initial_dir
         )
 
     def render(self) -> Image.Image:

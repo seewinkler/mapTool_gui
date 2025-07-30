@@ -1,15 +1,17 @@
-from io import BytesIO
-from PySide6.QtWidgets import QFileDialog
+# gui/controllers/export_controller.py
+
+from pathlib import Path
+from gui.map_composer import MapComposer
 
 class ExportController:
-    def __init__(self, composer, view, config, parent):
+    def __init__(self, composer: MapComposer, view, config: dict, parent):
         self.composer = composer
         self.view = view
         self.config = config
         self.parent = parent
 
-    def render_clicked(self):
-        # Formate setzen
+    def render_clicked(self) -> None:
+        # 1) Export-Formate sammeln
         formats = []
         if self.view.cb_png.isChecked():
             formats.append("png")
@@ -17,28 +19,19 @@ class ExportController:
             formats.append("svg")
         self.composer.set_export_formats(formats)
 
-        # Aktuelle Dimensionen synchronisieren
+        # 2) Abmessungen synchronisieren
         w = self.view.sp_w.value()
         h = self.view.sp_h.value()
         self.composer.set_dimensions(w, h)
 
-        # Ausgabeordner wählen
-        out_dir = QFileDialog.getExistingDirectory(
-            self.parent,
-            "Ausgabeordner wählen",
-            self.config.get("output_dir", "output")
+        # 3) Speichern per Save-Dialog, öffnet danach den Ordner
+        saved_path = self.composer.compose_and_save_dialog(
+            parent=self.parent,
+            initial_dir=self.config.get("output_dir", "output")
         )
-        if not out_dir:
-            return
+        if saved_path:
+            # Optional: zuletzt gewählten Ordner merken
+            self.config["output_dir"] = str(saved_path.parent)
 
-        # Für jeden gewählten Format jeweils in eine Datei speichern
-        for fmt in formats:
-            filename = f"{out_dir}/karte.{fmt}"
-            # MapExporter unterstützt Dateiobjekte; wir nutzen einen BytesIO-Umweg
-            buffer = BytesIO()
-            self.composer.compose_and_save(buffer)
-            with open(filename, "wb") as f:
-                f.write(buffer.getvalue())
-
-        # Vorschau aktualisieren
+        # 4) Vorschau aktualisieren
         self.view.map_canvas.refresh()
