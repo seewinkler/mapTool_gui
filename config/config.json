@@ -4,14 +4,9 @@
     "file": "app.log",
     "maxBytes": 5242880,
     "backupCount": 3,
-    "suppress_modules": [
-      "matplotlib.font_manager"
-    ]
+    "suppress_modules": ["matplotlib.font_manager"]
   },
-  "hauptland": [
-    "ADM_ADM_0",
-    "ADM_ADM_1"
-  ],
+  "hauptland": ["ADM_ADM_0", "ADM_ADM_1"],
   "nebenlaender": "ADM_ADM_0",
   "farben": {
     "hauptland": "#538B32",
@@ -30,7 +25,9 @@
     "zoomlevel_vertikal": 0.0,
     "zoomlevel_horizontal": 0.0,
     "debug": true,
-    "dpi": 300
+    "dpi": 300,
+    "padding_x": 0.05,
+    "padding_y": 0.05
   },
   "background": {
     "color": "#2896BA",
