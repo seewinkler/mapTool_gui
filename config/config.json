@@ -4,9 +4,14 @@
     "file": "app.log",
     "maxBytes": 5242880,
     "backupCount": 3,
-    "suppress_modules": ["matplotlib.font_manager"]
+    "suppress_modules": [
+      "matplotlib.font_manager"
+    ]
   },
-  "hauptland": ["ADM_ADM_0", "ADM_ADM_1"],
+  "hauptland": [
+    "ADM_ADM_0",
+    "ADM_ADM_1"
+  ],
   "nebenlaender": "ADM_ADM_0",
   "farben": {
     "hauptland": "#538B32",
@@ -41,7 +46,7 @@
     "epsg_list": "assets/epsg_list.json"
   },
   "scalebar": {
-    "show": false,
+    "show": true,
     "length_fraction": 0.07,
     "position": "bottom-right",
     "color": "white",
@@ -51,5 +56,16 @@
     "padding_px": 20,
     "min_length_px": 80,
     "max_length_px": 200
+  },
+  "highlight_cfg": {
+    "aktiv": false,
+    "layer": "ADM_ADM_1",
+    "namen": []
+  },
+  "hide_cfg": {
+    "aktiv": false,
+    "bereiche": {
+      "ADM_ADM_1": []
+    }
   }
 }
