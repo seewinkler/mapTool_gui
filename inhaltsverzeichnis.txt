@@ -1,0 +1,300 @@
+🗂️ Inhaltsverzeichnis aller .py-Dateien
+
+📄 Datei: main.py
+  🔹 Funktionen:
+    - main
+
+📄 Datei: __init__.py
+
+📄 Datei: data_processing\crs.py
+  🔹 Funktionen:
+    - reproject
+    - compute_bbox
+
+📄 Datei: data_processing\layers.py
+  🔹 Funktionen:
+    - merge_hauptland_layers
+
+📄 Datei: gui\auswahlfenster.py
+  🔷 Klassen:
+    - AuswahlFenster
+  🔹 Funktionen:
+    - __init__
+    - _build_ui
+    - _on_text_selected
+    - _on_text_selected_and_close
+    - _on_text_changed
+    - _on_ok
+
+📄 Datei: gui\dropzones.py
+  🔷 Klassen:
+    - DropZone
+    - DropPanel
+  🔹 Funktionen:
+    - __init__
+    - get_main_paths
+    - get_sub_paths
+
+📄 Datei: gui\drop_panel.py
+  🔷 Klassen:
+    - DropZone
+    - DropPanel
+  🔹 Funktionen:
+    - __init__
+    - dragEnterEvent
+    - dropEvent
+    - __init__
+    - get_main_paths
+    - get_sub_paths
+
+📄 Datei: gui\log_viewer.py
+  🔷 Klassen:
+    - QTextEditLogger
+  🔹 Funktionen:
+    - __init__
+    - emit
+
+📄 Datei: gui\main_window.py
+  🔷 Klassen:
+    - MainWindow
+  🔹 Funktionen:
+    - __init__
+    - _build_ui
+    - _setup_logging
+    - _apply_config_defaults
+    - _on_dimensions_changed
+
+📄 Datei: gui\map_builder.py
+  🔷 Klassen:
+    - MapBuilder
+  🔹 Funktionen:
+    - pixel_to_pt
+    - __init__
+    - build_figure
+    - _empty_figure
+
+📄 Datei: gui\map_canvas.py
+  🔷 Klassen:
+    - MapCanvas
+  🔹 Funktionen:
+    - __init__
+    - _init_ui
+    - _apply_background
+    - set_background
+    - refresh
+    - _show_placeholder
+    - _show_image
+
+📄 Datei: gui\map_composer.py
+  🔷 Klassen:
+    - MapComposer
+  🔹 Funktionen:
+    - __init__
+    - set_files
+    - set_primary_layers
+    - set_hide
+    - set_highlight
+    - set_scalebar
+    - set_background
+    - set_dimensions
+    - set_export_formats
+    - _get_combined_gdf
+    - _create_empty_figure
+    - compose
+    - compose_and_save
+    - compose_and_save_dialog
+    - render
+
+📄 Datei: gui\map_exporter.py
+  🔷 Klassen:
+    - MapExporter
+  🔹 Funktionen:
+    - save
+    - _save
+    - save_with_dialog
+
+📄 Datei: gui\__init__.py
+
+📄 Datei: gui\controllers\appearance_controller.py
+  🔷 Klassen:
+    - AppearanceController
+  🔹 Funktionen:
+    - __init__
+    - choose_bg_color
+    - background_changed
+
+📄 Datei: gui\controllers\epsg_controller.py
+  🔷 Klassen:
+    - EpsgController
+  🔹 Funktionen:
+    - __init__
+    - select_epsg
+
+📄 Datei: gui\controllers\export_controller.py
+  🔷 Klassen:
+    - ExportController
+  🔹 Funktionen:
+    - __init__
+    - render_clicked
+
+📄 Datei: gui\controllers\file_controller.py
+  🔷 Klassen:
+    - FileController
+  🔹 Funktionen:
+    - __init__
+    - handle_files_changed
+
+📄 Datei: gui\controllers\layer_controller.py
+  🔷 Klassen:
+    - LayerController
+  🔹 Funktionen:
+    - __init__
+    - handle_primary_selection
+    - handle_hide_changed
+    - handle_highlight_changed
+
+📄 Datei: gui\controllers\main_controller.py
+  🔷 Klassen:
+    - MainController
+  🔹 Funktionen:
+    - __init__
+    - _connect_signals
+    - run
+
+📄 Datei: gui\controllers\settings_controller.py
+  🔷 Klassen:
+    - SettingsController
+  🔹 Funktionen:
+    - __init__
+    - handle_dimensions_changed
+    - handle_scalebar_changed
+
+📄 Datei: gui\controls\background_settings.py
+  🔷 Klassen:
+    - BackgroundSettingsGroup
+  🔹 Funktionen:
+    - __init__
+
+📄 Datei: gui\controls\export_settings.py
+  🔷 Klassen:
+    - ExportSettingsGroup
+  🔹 Funktionen:
+    - __init__
+
+📄 Datei: gui\controls\layer_selection.py
+  🔷 Klassen:
+    - LayerSelectionGroup
+  🔹 Funktionen:
+    - toggle_item_check
+    - __init__
+
+📄 Datei: gui\controls\map_settings.py
+  🔷 Klassen:
+    - MapSettingsGroup
+  🔹 Funktionen:
+    - __init__
+
+📄 Datei: gui\controls\scalebar_settings.py
+  🔷 Klassen:
+    - ScalebarSettingsGroup
+  🔹 Funktionen:
+    - __init__
+
+📄 Datei: gui\widgets\map_canvas.py
+  🔷 Klassen:
+    - MapCanvas
+  🔹 Funktionen:
+    - __init__
+    - refresh
+
+📄 Datei: gui\widgets\__init__.py
+
+📄 Datei: utils\autocomplete.py
+  🔹 Funktionen:
+    - setup_autocomplete
+    - on_text_edited
+
+📄 Datei: utils\bbox_helper.py
+  🔹 Funktionen:
+    - compute_bbox
+
+📄 Datei: utils\cli.py
+  🔹 Funktionen:
+    - parse_mode
+    - get_background_labels
+    - parse_background_option
+    - compute_dimensions
+    - get_regions
+    - parse_region
+    - get_scalebar_labels
+    - parse_scalebar_option
+    - parse_export_formats
+
+📄 Datei: utils\config.py
+  🔹 Funktionen:
+    - setup_logging
+    - load_config
+    - save_config
+
+📄 Datei: utils\crs_selector.py
+  🔹 Funktionen:
+    - load_config
+    - get_regions
+    - select_region
+    - load_epsg_list
+    - get_country_names
+    - select_country_by_index
+    - select_country_by_name
+
+📄 Datei: utils\datenloader.py
+  🔹 Funktionen:
+    - get_asset_path
+    - load_epsg_list
+
+📄 Datei: utils\drop_utils.py
+  🔷 Klassen:
+    - DropZoneLogic
+  🔹 Funktionen:
+    - __init__
+    - _setup_ui
+    - dragEnterEvent
+    - dragMoveEvent
+    - dragLeaveEvent
+    - dropEvent
+    - _unique_temp_path
+    - get_paths
+
+📄 Datei: utils\io_utils.py
+  🔹 Funktionen:
+    - find_gpkg_files
+
+📄 Datei: utils\layer_selector.py
+  🔹 Funktionen:
+    - get_simplest_layer
+
+📄 Datei: utils\logging_config.py
+  🔹 Funktionen:
+    - setup_logging
+
+📄 Datei: utils\plotting.py
+  🔹 Funktionen:
+    - pixel_to_pt
+    - plot_map
+    - save_map
+
+📄 Datei: utils\region_filter.py
+  🔹 Funktionen:
+    - list_layers
+    - list_region_names
+    - filter_regions_by_indices
+    - compute_hide_config
+    - compute_highlight_config
+
+📄 Datei: utils\scalebar.py
+  🔹 Funktionen:
+    - pixel_to_pt
+    - nice_number
+    - add_scalebar
+
+📄 Datei: utils\__init__.py
+
