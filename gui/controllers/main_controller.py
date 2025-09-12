@@ -1,4 +1,5 @@
 # gui/controllers/main_controller.py
+
 from typing import Any
 import sys
 import logging
@@ -90,4 +91,6 @@ class MainController:
         """Startet die Anwendung."""
         self._connect_all_signals()
         self.view.show()
+        # Optional: initiale Vorschau, falls schon Daten geladen sind
+        self.view.map_canvas.refresh(preview=True)
         return self.app.exec()
