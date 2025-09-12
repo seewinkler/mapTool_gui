@@ -180,4 +180,5 @@ class MainWindow(QMainWindow):
         self.sp_h.setValue(h)
 
         self.map_canvas.setFixedSize(w, h)
-        self.map_canvas.refresh()
+        # Vorschau-Refresh (schnell, halbe Pixelmaße, vereinfachte Geometrien)
+        self.map_canvas.refresh(preview=True)

@@ -227,9 +227,64 @@ class MapComposer:
     # ------------------------------------------------------------
     # Vorschau
     # ------------------------------------------------------------
-    def render(self) -> Image.Image:
-        """Erstellt eine schnelle Vorschau als PIL.Image für die GUI-Anzeige."""
+    def render(self, preview_mode: bool = False) -> Image.Image:
+        """
+        Erstellt eine Vorschau als PIL.Image für die GUI-Anzeige.
+        Wenn preview_mode=True:
+        - Pixelmaße halbieren
+        - DPI unverändert lassen (Maßstab korrekt)
+        - Geometrien vereinfachen
+        """
         buffer = BytesIO()
-        self.compose_and_save(buffer)
+
+        # Originalwerte sichern
+        orig_w, orig_h = self.width_px, self.height_px
+        orig_gdf = None
+
+        if preview_mode:
+            # Pixelmaße halbieren
+            self.width_px = max(1, int(orig_w * 0.5))
+            self.height_px = max(1, int(orig_h * 0.5))
+
+            # Geometrien vereinfachen
+            combined = self._get_combined_gdf()
+            if combined is not None:
+                # Original sichern, um später wiederherzustellen
+                orig_gdf = combined.copy()
+                combined["geometry"] = combined["geometry"].simplify(
+                    tolerance=0.01, preserve_topology=True
+                )
+
+                # MapBuilder soll vereinfachte Geometrien nutzen
+                from gui.map_builder import MapBuilder
+                builder = MapBuilder(
+                    cfg=self.config,
+                    main_gpkg=None,
+                    layers=self.primary_layers,
+                    crs=self.crs,
+                    hide_cfg=self.hide_cfg,
+                    hl_cfg=self.hl_cfg,
+                    gdf=combined
+                )
+                builder.width_px = self.width_px
+                builder.height_px = self.height_px
+                builder.background = self.background_cfg
+                builder.scalebar_cfg = self.scalebar_cfg
+
+                fig = builder.build_figure()
+            else:
+                fig = self.compose()
+        else:
+            fig = self.compose()
+
+        # Speichern ins Memory-Buffer
+        MapExporter.save(fig, buffer, ["png"], transparent=self.background_cfg["transparent"])
         buffer.seek(0)
+
+        # Originalwerte wiederherstellen
+        self.width_px, self.height_px = orig_w, orig_h
+        if orig_gdf is not None:
+            # Falls wir später _get_combined_gdf() cachen, hier wieder einsetzen
+            pass
+
         return Image.open(buffer)

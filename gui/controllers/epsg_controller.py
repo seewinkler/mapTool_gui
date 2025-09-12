@@ -7,9 +7,9 @@ from gui.auswahlfenster import AuswahlFenster
 class EpsgController:
     def __init__(self, composer, view, config, parent):
         self.composer = composer
-        self.view      = view
-        self.config    = config
-        self.parent    = parent
+        self.view     = view
+        self.config   = config
+        self.parent   = parent
 
     def select_epsg(self):
         epsg_list = self.config.get("epsg_list", [])
@@ -22,4 +22,6 @@ class EpsgController:
 
         self.composer.crs = new_crs
         logging.info("Neues CRS gesetzt: %s", new_crs)
-        self.view.map_canvas.refresh()
+
+        # Vorschau-Refresh statt voller Qualität
+        self.view.map_canvas.refresh(preview=True)

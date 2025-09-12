@@ -2,7 +2,7 @@
 
 import logging
 from PySide6.QtWidgets import QColorDialog
-from utils.config        import save_config
+from utils.config import save_config
 
 class AppearanceController:
     def __init__(self, composer, view, config, parent):
@@ -24,7 +24,8 @@ class AppearanceController:
         self.config["background"]["color"] = col.name()
         save_config(self.config)
 
-        self.view.map_canvas.refresh()
+        # Vorschau-Refresh
+        self.view.map_canvas.refresh(preview=True)
 
     def background_changed(self, state: int):
         transparent = bool(state)
@@ -37,4 +38,5 @@ class AppearanceController:
         self.config["background"]["transparent"] = transparent
         save_config(self.config)
 
-        self.view.map_canvas.refresh()
+        # Vorschau-Refresh
+        self.view.map_canvas.refresh(preview=True)
