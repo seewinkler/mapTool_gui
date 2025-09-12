@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
 )
 
-from gui.drop_panel import DropPanel
+from gui.drop_widgets import DropPanel
 from gui.map_canvas import MapCanvas
 from gui.log_viewer import QTextEditLogger
 from gui.controls.map_settings import MapSettingsGroup
