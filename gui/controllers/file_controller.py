@@ -6,9 +6,15 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QListWidgetItem
 
 class FileController:
-    def __init__(self, composer, view):
+    def __init__(self, composer, view, main_ctrl=None):
+        """
+        :param composer: MapComposer-Instanz
+        :param view: MainWindow-Instanz
+        :param main_ctrl: Optionaler Verweis auf MainController
+        """
         self.composer = composer
         self.view = view
+        self.main_ctrl = main_ctrl
 
     def handle_files_changed(self):
         mains = self.view.drop_panel.get_main_paths()
@@ -40,5 +46,6 @@ class FileController:
         self.view.lst_hide.clear()
         self.view.lst_high.clear()
 
-        # Erste Anzeige nach Dateiladen in voller Qualität
-        self.view.map_canvas.refresh(preview=False)
+        # Kein sofortiger Refresh mehr – nur als 'dirty' markieren
+        if self.main_ctrl and hasattr(self.main_ctrl, "mark_preview_dirty"):
+            self.main_ctrl.mark_preview_dirty()

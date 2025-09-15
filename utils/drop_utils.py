@@ -4,12 +4,13 @@ import os
 import shutil
 import tempfile
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QListWidget, QAbstractItemView
+from PySide6.QtWidgets import QListWidget, QAbstractItemView, QWidget, QVBoxLayout, QLabel
+
 
 class DropZoneLogic(QListWidget):
     """
     Basisklasse für eine Drop-Zone, die .gpkg-Dateien akzeptiert,
-    intern Path und optional Kopie verwaltet.
+    intern Pfade und optional Kopien verwaltet.
     """
     dropChanged = Signal()
 
@@ -25,10 +26,13 @@ class DropZoneLogic(QListWidget):
         self.allow_multiple = allow_multiple
         self.copy_to_temp = copy_to_temp
 
+        self._temp_dir = None
         if self.copy_to_temp:
             self._temp_dir = tempfile.mkdtemp(prefix="maptool_")
 
         self._setup_ui()
+        # Platzhaltertext initial setzen
+        self.addItem(f"Datei hier ablegen ({self.title})")
 
     def _setup_ui(self):
         """Styling & Drag-&-Drop aktivieren."""
@@ -83,6 +87,10 @@ class DropZoneLogic(QListWidget):
             else:
                 store_path = src
 
+            # Platzhalter entfernen, falls vorhanden
+            if self.count() == 1 and not self.item(0).data(Qt.UserRole):
+                super().clear()
+
             if not self.findItems(name, Qt.MatchExactly):
                 self.addItem(name)
                 # Kompletter Pfad im UserRole speichern
@@ -107,4 +115,59 @@ class DropZoneLogic(QListWidget):
         return [
             self.item(i).data(Qt.UserRole)
             for i in range(self.count())
+            if self.item(i).data(Qt.UserRole)
         ]
+
+    def clear(self):
+        """
+        Leert die Drop-Zone vollständig:
+        - Entfernt alle Einträge aus der Anzeige
+        - Setzt Platzhaltertext zurück
+        - Löscht ggf. temporäre Dateien
+        - Erstellt bei Bedarf einen neuen Temp-Ordner
+        """
+        super().clear()
+
+        # Platzhaltertext wieder anzeigen
+        self.addItem(f"Datei hier ablegen ({self.title})")
+
+        # Temporäre Dateien löschen, falls vorhanden
+        if self.copy_to_temp and self._temp_dir and os.path.exists(self._temp_dir):
+            try:
+                shutil.rmtree(self._temp_dir)
+            except Exception:
+                pass
+            # Neuen Temp-Ordner anlegen
+            self._temp_dir = tempfile.mkdtemp(prefix="maptool_")
+
+
+class DropPanel(QWidget):
+    """
+    Container für zwei Drop-Zonen: Main und Sub.
+    """
+    def __init__(self, copy_to_temp=False, parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        # Main Drop-Zone
+        self.drop_main = DropZoneLogic("Main", allow_multiple=False, copy_to_temp=copy_to_temp)
+        layout.addWidget(QLabel("Hauptdatei (.gpkg):"))
+        layout.addWidget(self.drop_main)
+
+        # Sub Drop-Zone
+        self.drop_sub = DropZoneLogic("Sub", allow_multiple=True, copy_to_temp=copy_to_temp)
+        layout.addWidget(QLabel("Zusatzdateien (.gpkg):"))
+        layout.addWidget(self.drop_sub)
+
+    def get_main_paths(self) -> list[str]:
+        return self.drop_main.get_paths()
+
+    def get_sub_paths(self) -> list[str]:
+        return self.drop_sub.get_paths()
+
+    def clear(self):
+        """Leert beide Drop-Zonen."""
+        self.drop_main.clear()
+        self.drop_sub.clear()

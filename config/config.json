@@ -48,7 +48,7 @@
   "scalebar": {
     "show": true,
     "length_fraction": 0.07,
-    "position": "bottom-right",
+    "position": "bottom-left",
     "color": "white",
     "linewidth_px": 1.5,
     "font_px": 16,

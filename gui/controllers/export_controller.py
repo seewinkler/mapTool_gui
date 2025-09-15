@@ -4,11 +4,19 @@ from pathlib import Path
 from gui.map_composer import MapComposer
 
 class ExportController:
-    def __init__(self, composer: MapComposer, view, config: dict, parent):
+    def __init__(self, composer: MapComposer, view, config: dict, parent, main_ctrl=None):
+        """
+        :param composer: MapComposer-Instanz
+        :param view: MainWindow-Instanz
+        :param config: Config-Dict
+        :param parent: Parent-Widget für Dialoge
+        :param main_ctrl: Optionaler Verweis auf MainController
+        """
         self.composer = composer
         self.view = view
         self.config = config
         self.parent = parent
+        self.main_ctrl = main_ctrl
 
     def render_clicked(self) -> None:
         # 1) Export-Formate sammeln
@@ -33,5 +41,12 @@ class ExportController:
             # Optional: zuletzt gewählten Ordner merken
             self.config["output_dir"] = str(saved_path.parent)
 
-        # 4) Vorschau aktualisieren – hier volle Qualität
-        self.view.map_canvas.refresh(preview=False)
+        # 4) Kein automatischer Vorschau-Refresh mehr
+        #    Stattdessen Dirty-Flag zurücksetzen, da Export auf finalen Daten basiert
+        if self.main_ctrl and hasattr(self.main_ctrl, "preview_dirty"):
+            self.main_ctrl.preview_dirty = False
+            if hasattr(self.main_ctrl.view, "set_preview_dirty_indicator"):
+                try:
+                    self.main_ctrl.view.set_preview_dirty_indicator(False)
+                except Exception:
+                    pass

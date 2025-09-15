@@ -3,17 +3,26 @@
 from utils.config import save_config
 
 class SettingsController:
-    def __init__(self, composer, view, config):
+    def __init__(self, composer, view, config, main_ctrl=None):
+        """
+        :param composer: MapComposer-Instanz
+        :param view: MainWindow-Instanz
+        :param config: Config-Dict
+        :param main_ctrl: Optionaler Verweis auf MainController
+        """
         self.composer = composer
         self.view     = view
         self.config   = config
+        self.main_ctrl = main_ctrl
 
     def handle_dimensions_changed(self):
         w = self.view.sp_w.value()
         h = self.view.sp_h.value()
         self.composer.set_dimensions(w, h)
-        # Vorschau-Refresh
-        self.view.map_canvas.refresh(preview=True)
+
+        # Kein sofortiger Refresh mehr – nur als 'dirty' markieren
+        if self.main_ctrl and hasattr(self.main_ctrl, "mark_preview_dirty"):
+            self.main_ctrl.mark_preview_dirty()
 
     def handle_scalebar_changed(self):
         show     = self.view.cb_sb_show.isChecked()
@@ -29,5 +38,7 @@ class SettingsController:
 
         self.config["scalebar"] = sb_cfg
         save_config(self.config)
-        # Vorschau-Refresh
-        self.view.map_canvas.refresh(preview=True)
+
+        # Kein sofortiger Refresh mehr – nur als 'dirty' markieren
+        if self.main_ctrl and hasattr(self.main_ctrl, "mark_preview_dirty"):
+            self.main_ctrl.mark_preview_dirty()

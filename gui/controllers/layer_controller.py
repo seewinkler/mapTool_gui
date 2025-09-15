@@ -15,17 +15,20 @@ class LayerController:
     das Ein-/Ausblenden und Hervorheben von Regionen.
     """
 
-    def __init__(self, composer, view):
+    def __init__(self, composer, view, main_ctrl=None):
+        """
+        :param composer: MapComposer-Instanz
+        :param view: MainWindow-Instanz
+        :param main_ctrl: Optionaler Verweis auf MainController
+        """
         self.composer  = composer
         self.view      = view
+        self.main_ctrl = main_ctrl
         self._gdf_main = None
         self._name_col = None
 
     def handle_primary_selection(self, item: QListWidgetItem) -> None:
-        """
-        Wird aufgerufen, wenn in lst_layers ein Layer
-        angehakt oder abgehakt wird.
-        """
+        """Wird aufgerufen, wenn in lst_layers ein Layer angehakt oder abgehakt wird."""
         # 1) Alle aktuell angehakten Haupt-Layer
         sel = [
             self.view.lst_layers.item(i).text()
@@ -36,11 +39,13 @@ class LayerController:
         # Composer updaten (auch bei leerer Selektion)
         self.composer.set_primary_layers(sel)
 
-        # Wenn nichts angehakt, leere hide/high-Listen und Canvas
+        # Wenn nichts angehakt, leere hide/high-Listen
         if not sel:
             self.view.lst_hide.clear()
             self.view.lst_high.clear()
-            self.view.map_canvas.refresh(preview=True)
+            # Nur dirty markieren
+            if self.main_ctrl:
+                self.main_ctrl.mark_preview_dirty()
             return
 
         # 2) GDF der gewählten Haupt-Layer laden
@@ -101,15 +106,12 @@ class LayerController:
             x_item.setCheckState(Qt.Unchecked)
             self.view.lst_high.addItem(x_item)
 
-        # 6) Vorschau neu zeichnen
-        self.view.map_canvas.refresh(preview=True)
+        # 6) Nur dirty markieren
+        if self.main_ctrl:
+            self.main_ctrl.mark_preview_dirty()
 
     def handle_hide_changed(self, item: QListWidgetItem) -> None:
-        """
-        Wird aufgerufen, wenn in lst_hide eine Region
-        ange- oder abgehakt wird. Aktualisiert Highlight-Liste
-        und die Karte.
-        """
+        """Wird aufgerufen, wenn in lst_hide eine Region ange- oder abgehakt wird."""
         # 1) Ausgeblendete Regionen sammeln
         hide_list = [
             self.view.lst_hide.item(i).text()
@@ -140,15 +142,12 @@ class LayerController:
                 item.setCheckState(Qt.Unchecked)
                 self.view.lst_high.addItem(item)
 
-        # 4) Karte neu zeichnen
-        self.view.map_canvas.refresh(preview=True)
+        # 4) Nur dirty markieren
+        if self.main_ctrl:
+            self.main_ctrl.mark_preview_dirty()
 
     def handle_highlight_changed(self, item: QListWidgetItem) -> None:
-        """
-        Wird aufgerufen, wenn in lst_high eine Region
-        ange- oder abgehakt wird. Aktualisiert Hervorhebung
-        in der Karte.
-        """
+        """Wird aufgerufen, wenn in lst_high eine Region ange- oder abgehakt wird."""
         hl = [
             self.view.lst_high.item(i).text()
             for i in range(self.view.lst_high.count())
@@ -159,4 +158,7 @@ class LayerController:
             if self.composer.primary_layers else ""
         )
         self.composer.set_highlight(layer, hl)
-        self.view.map_canvas.refresh(preview=True)
+
+        # Nur dirty markieren
+        if self.main_ctrl:
+            self.main_ctrl.mark_preview_dirty()

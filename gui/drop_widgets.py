@@ -1,6 +1,6 @@
 # gui/drop_widgets.py
 import os
-from typing import List, Optional
+from typing import List
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 
@@ -9,6 +9,7 @@ class DropZone(QWidget):
 
     def __init__(self, title: str, allow_multiple: bool = True, copy_to_temp: bool = False, parent=None):
         super().__init__(parent)
+        self.title = title
         self.allow_multiple = allow_multiple
         self.copy_to_temp = copy_to_temp
         self.paths: List[str] = []
@@ -40,6 +41,15 @@ class DropZone(QWidget):
 
     def get_paths(self) -> List[str]:
         return self.paths
+
+    def clear(self):
+        """
+        Leert die Drop-Zone vollständig:
+        - Entfernt alle gespeicherten Pfade
+        - Setzt den Label-Text zurück
+        """
+        self.paths.clear()
+        self.label.setText("Keine Dateien")
 
 
 class DropPanel(QWidget):
@@ -81,3 +91,8 @@ class DropPanel(QWidget):
 
     def get_sub_paths(self) -> List[str]:
         return self.drop_sub.get_paths()
+
+    def clear(self):
+        """Leert beide Drop-Zonen."""
+        self.drop_main.clear()
+        self.drop_sub.clear()
