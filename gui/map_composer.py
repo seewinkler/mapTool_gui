@@ -193,13 +193,6 @@ class MapComposer:
             if gdf[col].dtype == "object" or pd.api.types.is_categorical_dtype(gdf[col]):
                 gdf[col] = gdf[col].fillna("")
 
-        # --- Debug-Ausgabe ---
-        print("DEBUG: GDF dtypes\n", gdf.dtypes)
-        if "__is_main" in gdf.columns:
-            print("DEBUG: __is_main unique values:", gdf["__is_main"].unique())
-        if "highlight" in gdf.columns:
-            print("DEBUG: highlight unique values:", gdf["highlight"].unique())
-
         # --- Typbereinigung ---
         if "__is_main" in gdf.columns:
             try:
@@ -216,7 +209,6 @@ class MapComposer:
                 gdf["highlight"] = False
 
         return gdf
-
 
     # ------------------------------------------------------------
     # Figure-Erstellung

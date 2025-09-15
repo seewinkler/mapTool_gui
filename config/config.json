@@ -58,5 +58,11 @@
     "aktiv": false,
     "bereiche": {}
   },
+  "overlay_style": {
+    "fill_color": "#2896BA",
+    "line_color": "#0000ff",
+    "line_width": 0,
+    "show_lines": false
+  },
   "output_dir": "D:\\Gotti\\Code\\mapTool_gui\\output"
 }

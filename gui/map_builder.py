@@ -54,22 +54,26 @@ class MapBuilder:
         if gdf is None or gdf.empty:
             return self._empty_figure()
 
-        # --- Typbereinigung, falls Spalten nicht bool sind ---
+        # --- Typbereinigung ---
         for col in ["__is_main", "__is_overlay", "highlight"]:
             if col in gdf.columns and gdf[col].dtype != bool:
                 try:
                     gdf[col] = gdf[col].astype(bool)
-                except Exception as e:
-                    print(f"WARN: {col} cast failed:", e)
+                except Exception:
                     gdf[col] = False
 
-        # Aufteilen in Hauptland, Nebenländer, Overlay
-        main_gdf = gdf[gdf["__is_main"]] if "__is_main" in gdf.columns else gdf.iloc[0:0]
-        sub_gdf = gdf[~gdf["__is_main"]] if "__is_main" in gdf.columns else gdf
-        overlay_gdf = gdf[gdf["__is_overlay"]] if "__is_overlay" in gdf.columns else gdf.iloc[0:0]
+        # --- Exklusive Aufteilung ---
+        main_gdf    = gdf[gdf.get("__is_main", False) == True]
+        overlay_gdf = gdf[gdf.get("__is_overlay", False) == True]
+        sub_gdf     = gdf[
+            (gdf.get("__is_main", False) == False) &
+            (gdf.get("__is_overlay", False) == False)
+        ]
+
+        # --- Kurze Übersicht ---
+        print(f"[INFO] Hauptland: {len(main_gdf)}, Nebenländer: {len(sub_gdf)}, Overlay: {len(overlay_gdf)}")
 
         fig, ax, dpi = self._create_figure_and_axis()
-
         self._apply_background(ax)
         lw_grenze, lw_highlight = self._get_linewidths(dpi)
 
@@ -86,15 +90,18 @@ class MapBuilder:
         # 4. Highlights
         self._plot_highlights(ax, main_gdf, lw_highlight)
 
-        # 5. Overlay zuletzt, damit es oben liegt
+        # 5. Overlay zuletzt
         if not overlay_gdf.empty:
+            style = self.cfg.get("overlay_style", {})
+            lw = style.get("line_width", 1.0)
             overlay_gdf.plot(
                 ax=ax,
-                color="none",  # keine Füllung, nur Konturen
-                edgecolor=self.colors.get("overlay", "red"),
-                linewidth=self.lines_cfg.get("overlay_px", 1),
+                color=style.get("fill_color", "none"),
+                edgecolor=style.get("line_color", "black") if lw > 0 and style.get("show_lines", True) else "none",
+                linewidth=lw,
                 zorder=5
             )
+
 
         # 6. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
@@ -190,7 +197,7 @@ class MapBuilder:
                     linewidth=lw_highlight,
                     zorder=3,
                 )
-
+                
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
@@ -199,18 +206,8 @@ class MapBuilder:
         if scalebar_cfg.get("show", False):
             extent = [*ax.get_xlim(), *ax.get_ylim()]
             tmp_cfg = {**self.cfg, "scalebar": scalebar_cfg}
-            add_scalebar(ax, extent, self.crs, tmp_cfg,
-                         preview_mode=preview_mode,
-                         preview_scale=preview_scale)
-
-    # ------------------------------------------------------------
-    # Fallback
-    # ------------------------------------------------------------
-    def _empty_figure(self) -> plt.Figure:
-        """Erstellt eine leere Figure mit Hinweistext."""
-        fig = plt.figure(figsize=(self.width_px / 100, self.height_px / 100))
-        fig.text(
-            0.5, 0.5, "Keine Daten vorhanden",
-            ha="center", va="center"
-        )
-        return fig
+            add_scalebar(
+                ax, extent, self.crs, tmp_cfg,
+                preview_mode=preview_mode,
+                preview_scale=preview_scale
+            )

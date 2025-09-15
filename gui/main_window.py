@@ -4,7 +4,8 @@ from typing import Any, Dict
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QPlainTextEdit, QTabWidget, QLabel, QGroupBox, QFormLayout, QGridLayout
+    QPlainTextEdit, QTabWidget, QLabel, QGroupBox, QFormLayout, QGridLayout,
+    QDoubleSpinBox, QCheckBox, QColorDialog
 )
 
 from gui.drop_widgets import DropPanel
@@ -28,6 +29,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.composer = composer
         self.config = config
+
+        # Temporärer Speicher für ausgewählte Overlay-Farben (erst bei Vorschau übernehmen)
+        self._overlay_colors: Dict[str, str] = {}
 
         self._apply_initial_composer_settings()
         self._build_ui()
@@ -137,6 +141,7 @@ class MainWindow(QMainWindow):
         main_tab_layout.addWidget(self.bg_settings)
 
         main_tab_layout.addStretch(1)
+
         # -- Tab 2: Zusatzfunktionen --
         tab_extra = QWidget()
         tabs.addTab(tab_extra, "Zusatzfunktionen")
@@ -158,10 +163,33 @@ class MainWindow(QMainWindow):
         gb_layout.addRow(QLabel("Admin-Level-Optionen und Farben (Controller-Logik folgt)."))
         extra_tab_layout.addWidget(group_bounds)
 
-        # Overlay-Optionen
+        # Overlay-Optionen – erweitert
         self.group_overlay = QGroupBox("Overlay")
         ov_layout = QFormLayout(self.group_overlay)
-        ov_layout.addRow(QLabel("Farbe, Transparenz, Entfernen (sichtbar wenn Overlay vorhanden)."))
+
+        # Füllfarbe
+        self.btn_overlay_fill = QPushButton("Füllfarbe wählen")
+        self.btn_overlay_fill.clicked.connect(lambda: self._choose_overlay_color("fill_color"))
+
+        # Linienfarbe
+        self.btn_overlay_line = QPushButton("Linienfarbe wählen")
+        self.btn_overlay_line.clicked.connect(lambda: self._choose_overlay_color("line_color"))
+
+        # Linienbreite (0 = keine Linie)
+        self.sp_overlay_line_width = QDoubleSpinBox()
+        self.sp_overlay_line_width.setRange(0, 10)
+        self.sp_overlay_line_width.setSingleStep(0.5)
+        self.sp_overlay_line_width.setValue(self.config.get("overlay_style", {}).get("line_width", 1.0))
+
+        # Linien anzeigen
+        self.cb_overlay_show_lines = QCheckBox("Linien anzeigen")
+        self.cb_overlay_show_lines.setChecked(self.config.get("overlay_style", {}).get("show_lines", True))
+
+        ov_layout.addRow("Füllfarbe:", self.btn_overlay_fill)
+        ov_layout.addRow("Linienfarbe:", self.btn_overlay_line)
+        ov_layout.addRow("Linienbreite (px):", self.sp_overlay_line_width)
+        ov_layout.addRow(self.cb_overlay_show_lines)
+
         extra_tab_layout.addWidget(self.group_overlay)
         self.group_overlay.setVisible(False)
 
@@ -198,6 +226,10 @@ class MainWindow(QMainWindow):
         btn_row.addWidget(self.btn_preview_update)
         btn_row.addWidget(self.btn_reset)
         bottom_panel.addLayout(btn_row)
+
+        # Neue Verbindung: Overlay-Style erst bei Klick übernehmen
+        self.btn_preview_update.clicked.connect(self._on_preview_update_clicked)
+
         self.btn_reset.clicked.connect(self._on_reset_clicked)
 
         self.btn_render = QPushButton("Karte rendern", self)
@@ -205,6 +237,14 @@ class MainWindow(QMainWindow):
 
         # Startzustand Overlay-Optionen setzen
         self._update_overlay_visibility()
+            # ------------------------------------------------------------
+    # Overlay-Helfer
+    # ------------------------------------------------------------
+    def _choose_overlay_color(self, target: str) -> None:
+        """Öffnet einen Farbwähler und speichert die Auswahl temporär."""
+        col = QColorDialog.getColor()
+        if col.isValid():
+            self._overlay_colors[target] = col.name()
 
     # ------------------------------------------------------------
     # Overlay-Optionen sichtbar/unsichtbar schalten
@@ -226,6 +266,35 @@ class MainWindow(QMainWindow):
             self.composer.set_overlay(None)
             logging.info("Overlay entfernt.")
         self._update_overlay_visibility()
+        self.map_canvas.refresh(preview=True)
+
+    # ------------------------------------------------------------
+    # Vorschau aktualisieren
+    # ------------------------------------------------------------
+    def _on_preview_update_clicked(self) -> None:
+        """Übernimmt aktuelle Overlay-Optionen in die Config und rendert die Vorschau."""
+        # Bisherige Style-Config holen oder Default
+        style_cfg = dict(self.config.get("overlay_style", {}))
+
+        # Aus temporären Farbwahlen übernehmen (wenn gesetzt), sonst bisherige Werte behalten
+        if "fill_color" in self._overlay_colors:
+            style_cfg["fill_color"] = self._overlay_colors["fill_color"]
+        else:
+            style_cfg.setdefault("fill_color", "#2896BA")
+
+        if "line_color" in self._overlay_colors:
+            style_cfg["line_color"] = self._overlay_colors["line_color"]
+        else:
+            style_cfg.setdefault("line_color", "#0000ff")
+
+        # Breite und Sichtbarkeit aus Controls
+        style_cfg["line_width"] = float(self.sp_overlay_line_width.value())
+        style_cfg["show_lines"] = self.cb_overlay_show_lines.isChecked()
+
+        # Zurück in die Config
+        self.config["overlay_style"] = style_cfg
+
+        # Vorschau neu rendern
         self.map_canvas.refresh(preview=True)
 
     # ------------------------------------------------------------
@@ -270,6 +339,12 @@ class MainWindow(QMainWindow):
         self.cb_png.setChecked(False)
         self.cb_svg.setChecked(False)
 
+        # Overlay-UI zurücksetzen (auf Config-Defaults)
+        style_cfg = self.config.get("overlay_style", {})
+        self._overlay_colors.clear()
+        self.sp_overlay_line_width.setValue(style_cfg.get("line_width", 1.0))
+        self.cb_overlay_show_lines.setChecked(style_cfg.get("show_lines", True))
+
         # Log leeren
         if hasattr(self, "log_widget"):
             self.log_widget.clear()
@@ -311,6 +386,12 @@ class MainWindow(QMainWindow):
         h = karte.get("hoehe", 600)
         self.sp_w.setValue(w)
         self.sp_h.setValue(h)
+
+        # Overlay-UI-Defaults aus Config laden
+        style_cfg = self.config.get("overlay_style", {})
+        self.sp_overlay_line_width.setValue(style_cfg.get("line_width", 1.0))
+        self.cb_overlay_show_lines.setChecked(style_cfg.get("show_lines", True))
+        # Farben bleiben bis zur Auswahl im Dialog in _overlay_colors leer
 
         # Canvas initial dimensionieren und Preview rendern
         self.map_canvas.setFixedSize(w, h)
