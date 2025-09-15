@@ -143,6 +143,14 @@ class MainWindow(QMainWindow):
         self.log_widget.setReadOnly(True)
         controls_layout.addWidget(self.log_widget, stretch=1)
 
+        # Neue Buttons: Vorschau aktualisieren & Zurücksetzen
+        btn_row = QHBoxLayout()
+        self.btn_preview_update = QPushButton("Vorschau aktualisieren", self)
+        self.btn_reset = QPushButton("Zurücksetzen", self)
+        btn_row.addWidget(self.btn_preview_update)
+        btn_row.addWidget(self.btn_reset)
+        controls_layout.addLayout(btn_row)
+
         # Render-Button
         self.btn_render = QPushButton("Karte rendern", self)
         controls_layout.addWidget(self.btn_render)
