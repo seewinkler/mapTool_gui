@@ -65,63 +65,50 @@ class MapComposer:
     # Setter-Methoden
     # ------------------------------------------------------------
     def set_files(self, main: str, subs: List[str]) -> None:
-        """Haupt- und Neben-Geopackages setzen."""
         self.main_gpkg = main
         self.sub_gpkgs = subs or []
 
     def set_primary_layers(self, layers: List[str]) -> None:
-        """Reihenfolge oder Auswahl der primären Layer anpassen."""
         self.primary_layers = list(layers)
 
     def set_hide(self, hide_map: Dict[str, List[str]]) -> None:
-        """Ausblendungen konfigurieren."""
         aktiv = any(hide_map.values())
         self.hide_cfg = {"aktiv": aktiv, "bereiche": hide_map}
         self.config["hide_cfg"] = self.hide_cfg
 
     def set_highlight(self, layer: str, names: List[str]) -> None:
-        """Hervorzuhebenden Layer und Features definieren."""
         aktiv = bool(names)
         self.hl_cfg = {"aktiv": aktiv, "layer": layer, "namen": names}
         self.config["highlight_cfg"] = self.hl_cfg
 
     def set_scalebar(self, cfg: Dict) -> None:
-        """Globale Scalebar-Settings aktualisieren und lokal speichern."""
         from utils.config import SCALER
         SCALER.clear()
         SCALER.update(cfg)
         self.scalebar_cfg = dict(cfg)
 
     def set_background(self, color: Optional[str] = None, transparent: Optional[bool] = None) -> None:
-        """Hintergrundfarbe und -transparenz setzen."""
         if color is not None:
             self.background_cfg["color"] = color
         if transparent is not None:
             self.background_cfg["transparent"] = transparent
 
     def set_dimensions(self, width: int, height: int) -> None:
-        """Breite und Höhe (in Pixeln) für Figure-/Canvas-Größe festlegen."""
         self.width_px = width
         self.height_px = height
 
     def set_export_formats(self, formats: List[str]) -> None:
-        """Export-Formate (z.B. ['png','svg']) festlegen."""
         self.export_formats = list(formats)
 
     # ------------------------------------------------------------
     # Datenaufbereitung
     # ------------------------------------------------------------
     def _get_combined_gdf(self) -> Optional[GeoDataFrame]:
-        """
-        Lädt Haupt- und Neben-GPKGs, merged deren GeoDataFrames
-        und liefert ein kombiniertes GeoDataFrame zurück.
-        """
         if not self.main_gpkg:
             return None
 
         parts = []
 
-        # Haupt-GPKG laden
         main_gdf = merge_hauptland_layers(
             self.main_gpkg,
             self.primary_layers,
@@ -132,7 +119,6 @@ class MapComposer:
         main_gdf["__is_main"] = True
         parts.append(main_gdf)
 
-        # Neben-GPKGs laden
         for sub in self.sub_gpkgs:
             if not sub:
                 continue
@@ -153,7 +139,6 @@ class MapComposer:
     # Figure-Erstellung
     # ------------------------------------------------------------
     def _create_empty_figure(self) -> plt.Figure:
-        """Leere Figure mit Hintergrund-Logik (ohne Geometrien)."""
         dpi = self.config.get("export", {}).get("dpi", 300)
         fig_w = self.width_px / dpi
         fig_h = self.height_px / dpi
@@ -166,11 +151,7 @@ class MapComposer:
 
         return fig
 
-    def compose(self) -> plt.Figure:
-        """
-        Baut die aktuelle Karte als Matplotlib-Figure auf.
-        Gibt bei fehlender main_gpkg oder keinem GDF eine leere Fläche zurück.
-        """
+    def compose(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
         if not self.main_gpkg:
             return self._create_empty_figure()
 
@@ -188,19 +169,17 @@ class MapComposer:
             gdf=combined
         )
 
-        # UI-Overrides synchronisieren
-        builder.width_px = self.width_px
-        builder.height_px = self.height_px
+        builder.width_px = self.width_px if not preview_mode else int(self.width_px * preview_scale)
+        builder.height_px = self.height_px if not preview_mode else int(self.height_px * preview_scale)
         builder.background = self.background_cfg
         builder.scalebar_cfg = self.scalebar_cfg
 
-        return builder.build_figure()
+        return builder.build_figure(preview_mode=preview_mode, preview_scale=preview_scale)
 
     # ------------------------------------------------------------
     # Export
     # ------------------------------------------------------------
     def compose_and_save(self, output: BytesIO) -> None:
-        """Schreibt die aktuell erzeugte Figure in den BytesIO-Stream."""
         fig = self.compose()
         MapExporter.save(
             fig,
@@ -214,7 +193,6 @@ class MapComposer:
         parent=None,
         initial_dir: str = "output"
     ) -> Optional[Path]:
-        """Öffnet einen Save-Dialog und speichert die Figure."""
         fig = self.compose()
         return MapExporter.save_with_dialog(
             fig,
@@ -228,28 +206,10 @@ class MapComposer:
     # Vorschau
     # ------------------------------------------------------------
     def render(self, preview_mode: bool = False) -> Image.Image:
-        """
-        Erstellt eine Vorschau als PIL.Image für die GUI-Anzeige.
-        Wenn preview_mode=True:
-        - Pixelmaße halbieren (nur temporär)
-        - DPI unverändert lassen (Maßstab korrekt)
-        - Geometrien vereinfachen
-        """
         buffer = BytesIO()
-
-        # Originalmaße sichern
-        orig_w, orig_h = self.width_px, self.height_px
-
-        # Temporäre Maße für diesen Renderdurchlauf
-        if preview_mode:
-            render_w = max(1, int(orig_w * 0.5))
-            render_h = max(1, int(orig_h * 0.5))
-        else:
-            render_w = orig_w
-            render_h = orig_h
+        preview_scale = 0.5 if preview_mode else 1.0
 
         if preview_mode:
-            # Geometrien vereinfachen
             combined = self._get_combined_gdf()
             if combined is not None:
                 combined = combined.copy()
@@ -257,7 +217,6 @@ class MapComposer:
                     tolerance=0.01, preserve_topology=True
                 )
 
-                from gui.map_builder import MapBuilder
                 builder = MapBuilder(
                     cfg=self.config,
                     main_gpkg=None,
@@ -267,21 +226,17 @@ class MapComposer:
                     hl_cfg=self.hl_cfg,
                     gdf=combined
                 )
-                builder.width_px = render_w
-                builder.height_px = render_h
+                builder.width_px = int(self.width_px * preview_scale)
+                builder.height_px = int(self.height_px * preview_scale)
                 builder.background = self.background_cfg
                 builder.scalebar_cfg = self.scalebar_cfg
 
-                fig = builder.build_figure()
+                fig = builder.build_figure(preview_mode=True, preview_scale=preview_scale)
             else:
-                fig = self.compose()
+                fig = self.compose(preview_mode=True, preview_scale=preview_scale)
         else:
-            # Volle Qualität
-            fig = self.compose()
+            fig = self.compose(preview_mode=False)
 
-        # Speichern ins Memory-Buffer
         MapExporter.save(fig, buffer, ["png"], transparent=self.background_cfg["transparent"])
         buffer.seek(0)
-
-        # Originalmaße bleiben unverändert
         return Image.open(buffer)

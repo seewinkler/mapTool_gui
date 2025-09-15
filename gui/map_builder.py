@@ -52,7 +52,7 @@ class MapBuilder:
     # ------------------------------------------------------------
     # Hauptmethode
     # ------------------------------------------------------------
-    def build_figure(self) -> plt.Figure:
+    def build_figure(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
         """Erzeugt die Karte als Matplotlib-Figure."""
         gdf = self._get_geodataframe()
         if gdf is None or gdf.empty:
@@ -70,7 +70,7 @@ class MapBuilder:
         self._set_bbox(ax, main_gdf)
         self._plot_maincountry(ax, main_gdf, lw_grenze)
         self._plot_highlights(ax, main_gdf, lw_highlight)
-        self._add_scalebar(ax)
+        self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         return fig
@@ -158,7 +158,7 @@ class MapBuilder:
                     zorder=3,
                 )
 
-    def _add_scalebar(self, ax):
+    def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
         scalebar_cfg = {**self._scalebar_defaults, **current}
@@ -166,7 +166,9 @@ class MapBuilder:
         if scalebar_cfg.get("show", False):
             extent = [*ax.get_xlim(), *ax.get_ylim()]
             tmp_cfg = {**self.cfg, "scalebar": scalebar_cfg}
-            add_scalebar(ax, extent, self.crs, tmp_cfg)
+            add_scalebar(ax, extent, self.crs, tmp_cfg,
+                         preview_mode=preview_mode,
+                         preview_scale=preview_scale)
 
     # ------------------------------------------------------------
     # Fallback
