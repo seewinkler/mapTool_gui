@@ -259,12 +259,23 @@ class MainWindow(QMainWindow):
     def _on_overlay_dropped(self):
         """Wird aufgerufen, wenn in die Overlay-Drop-Zone eine Datei gelegt oder entfernt wird."""
         paths = self.drop_panel.get_overlay_paths()
+
         if paths:
+            # Overlay setzen
             self.composer.set_overlay(paths[0])
             logging.info(f"Overlay geladen: {paths[0]}")
         else:
-            self.composer.set_overlay(None)
-            logging.info("Overlay entfernt.")
+            logging.info("Kein Overlay geladen.")
+            # Extra-Schutz: nur aufrufen, wenn der Composer damit umgehen kann
+            if hasattr(self.composer, "clear_overlay"):
+                try:
+                    self.composer.clear_overlay()
+                    logging.info("Overlay im Composer entfernt.")
+                except Exception as e:
+                    logging.warning(f"Overlay konnte nicht entfernt werden: {e}")
+            else:
+                logging.debug("Composer hat keine clear_overlay()-Methode – kein Entfernen nötig.")
+
         self._update_overlay_visibility()
         self.map_canvas.refresh(preview=True)
 

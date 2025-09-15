@@ -3,6 +3,7 @@ from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
 from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
+import pandas as pd
 
 def pixel_to_pt(px: float, dpi: float) -> float:
     """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
@@ -62,13 +63,20 @@ class MapBuilder:
                 except Exception:
                     gdf[col] = False
 
-        # --- Exklusive Aufteilung ---
-        main_gdf    = gdf[gdf.get("__is_main", False) == True]
-        overlay_gdf = gdf[gdf.get("__is_overlay", False) == True]
-        sub_gdf     = gdf[
-            (gdf.get("__is_main", False) == False) &
-            (gdf.get("__is_overlay", False) == False)
-        ]
+        # --- Exklusive Aufteilung (fehlertolerant) ---
+        if "__is_main" in gdf.columns:
+            mask_main = gdf["__is_main"] == True
+        else:
+            mask_main = pd.Series(False, index=gdf.index)
+
+        if "__is_overlay" in gdf.columns:
+            mask_overlay = gdf["__is_overlay"] == True
+        else:
+            mask_overlay = pd.Series(False, index=gdf.index)
+
+        main_gdf = gdf[mask_main]
+        overlay_gdf = gdf[mask_overlay]
+        sub_gdf = gdf[~mask_main & ~mask_overlay]
 
         # --- Kurze Übersicht ---
         print(f"[INFO] Hauptland: {len(main_gdf)}, Nebenländer: {len(sub_gdf)}, Overlay: {len(overlay_gdf)}")
@@ -90,18 +98,19 @@ class MapBuilder:
         # 4. Highlights
         self._plot_highlights(ax, main_gdf, lw_highlight)
 
-        # 5. Overlay zuletzt
+        # 5. Overlay zuletzt – nur wenn vorhanden und nicht leer
         if not overlay_gdf.empty:
             style = self.cfg.get("overlay_style", {})
             lw = style.get("line_width", 1.0)
             overlay_gdf.plot(
                 ax=ax,
                 color=style.get("fill_color", "none"),
-                edgecolor=style.get("line_color", "black") if lw > 0 and style.get("show_lines", True) else "none",
+                edgecolor=style.get("line_color", "black")
+                          if lw > 0 and style.get("show_lines", True)
+                          else "none",
                 linewidth=lw,
                 zorder=5
             )
-
 
         # 6. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
@@ -197,17 +206,38 @@ class MapBuilder:
                     linewidth=lw_highlight,
                     zorder=3,
                 )
-                
+
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
         scalebar_cfg = {**self._scalebar_defaults, **current}
 
         if scalebar_cfg.get("show", False):
+            # Aktuelle Ausdehnung der Achse holen
             extent = [*ax.get_xlim(), *ax.get_ylim()]
+            # Temporäre Config mit zusammengeführter Scalebar-Config
             tmp_cfg = {**self.cfg, "scalebar": scalebar_cfg}
+            # Maßstabsleiste hinzufügen
             add_scalebar(
-                ax, extent, self.crs, tmp_cfg,
+                ax,
+                extent,
+                self.crs,
+                tmp_cfg,
                 preview_mode=preview_mode,
                 preview_scale=preview_scale
             )
+
+    # ------------------------------------------------------------
+    # Leere Figure
+    # ------------------------------------------------------------
+    def _empty_figure(self) -> plt.Figure:
+        """Erstellt eine leere Figure (Platzhalter)."""
+        fig, ax, _ = self._create_figure_and_axis()
+        ax.text(
+            0.5, 0.5,
+            "Keine Daten",
+            ha="center", va="center",
+            fontsize=14,
+            transform=ax.transAxes
+        )
+        return fig
