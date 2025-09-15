@@ -3,7 +3,7 @@
 import logging
 from typing import List, Dict
 
-from PySide6.QtCore    import Qt
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QListWidgetItem
 
 from data_processing.layers import merge_hauptland_layers
@@ -40,7 +40,7 @@ class LayerController:
         if not sel:
             self.view.lst_hide.clear()
             self.view.lst_high.clear()
-            self.view.map_canvas.refresh()
+            self.view.map_canvas.refresh(preview=True)
             return
 
         # 2) GDF der gewählten Haupt-Layer laden
@@ -102,7 +102,7 @@ class LayerController:
             self.view.lst_high.addItem(x_item)
 
         # 6) Vorschau neu zeichnen
-        self.view.map_canvas.refresh()
+        self.view.map_canvas.refresh(preview=True)
 
     def handle_hide_changed(self, item: QListWidgetItem) -> None:
         """
@@ -141,7 +141,7 @@ class LayerController:
                 self.view.lst_high.addItem(item)
 
         # 4) Karte neu zeichnen
-        self.view.map_canvas.refresh()
+        self.view.map_canvas.refresh(preview=True)
 
     def handle_highlight_changed(self, item: QListWidgetItem) -> None:
         """
@@ -159,4 +159,4 @@ class LayerController:
             if self.composer.primary_layers else ""
         )
         self.composer.set_highlight(layer, hl)
-        self.view.map_canvas.refresh()
+        self.view.map_canvas.refresh(preview=True)

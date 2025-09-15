@@ -12,7 +12,8 @@ class SettingsController:
         w = self.view.sp_w.value()
         h = self.view.sp_h.value()
         self.composer.set_dimensions(w, h)
-        self.view.map_canvas.refresh()
+        # Vorschau-Refresh
+        self.view.map_canvas.refresh(preview=True)
 
     def handle_scalebar_changed(self):
         show     = self.view.cb_sb_show.isChecked()
@@ -28,4 +29,5 @@ class SettingsController:
 
         self.config["scalebar"] = sb_cfg
         save_config(self.config)
-        self.view.map_canvas.refresh()
+        # Vorschau-Refresh
+        self.view.map_canvas.refresh(preview=True)

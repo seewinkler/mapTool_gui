@@ -33,5 +33,5 @@ class ExportController:
             # Optional: zuletzt gewählten Ordner merken
             self.config["output_dir"] = str(saved_path.parent)
 
-        # 4) Vorschau aktualisieren
-        self.view.map_canvas.refresh()
+        # 4) Vorschau aktualisieren – hier volle Qualität
+        self.view.map_canvas.refresh(preview=False)

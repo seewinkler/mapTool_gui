@@ -39,3 +39,6 @@ class FileController:
         # Hide- und Highlight-Listen zurücksetzen
         self.view.lst_hide.clear()
         self.view.lst_high.clear()
+
+        # Erste Anzeige nach Dateiladen in voller Qualität
+        self.view.map_canvas.refresh(preview=False)

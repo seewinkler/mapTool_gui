@@ -77,18 +77,24 @@ class MapCanvas(QLabel):
         self._apply_background()
         self.refresh()
 
-    def refresh(self) -> None:
+    def refresh(self, preview: bool = True) -> None:
         """
         Lädt mit composer.render() die aktuelle Karte neu und zeigt
-        sie als QPixmap an. Bei Fehlern oder falls noch kein main_gpkg
-        gesetzt ist, wird der Platzhaltertext angezeigt.
+        sie als QPixmap an.
+
+        Parameter:
+        - preview=True: schnelle Vorschau (halbierte Pixelmaße, vereinfachte Geometrien)
+        - preview=False: volle Qualität (z. B. für Exportanzeige)
+
+        Bei Fehlern oder falls noch kein main_gpkg gesetzt ist,
+        wird der Platzhaltertext angezeigt.
         """
         if not getattr(self.composer, "main_gpkg", None):
             self._show_placeholder()
             return
 
         try:
-            pil_img = self.composer.render()
+            pil_img = self.composer.render(preview_mode=preview)
         except Exception as e:
             logging.error("Fehler beim Rendern der Karte: %s", e)
             self._show_placeholder()

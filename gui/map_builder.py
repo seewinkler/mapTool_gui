@@ -1,3 +1,5 @@
+# gui/map_builder.py
+
 import matplotlib.pyplot as plt
 from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
@@ -5,11 +7,17 @@ from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
 
 
-def pixel_to_pt(px, dpi):
+def pixel_to_pt(px: float, dpi: float) -> float:
+    """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
     return px * 72.0 / dpi
 
 
 class MapBuilder:
+    """
+    Baut eine Matplotlib-Figure aus Geodaten (Haupt- und Nebenländer),
+    inklusive Hintergrund, Layerfarben, Hervorhebungen und Maßstabsleiste.
+    """
+
     def __init__(
         self,
         cfg: Dict[str, Any],
@@ -20,101 +28,138 @@ class MapBuilder:
         hl_cfg: Optional[Dict[str, Any]] = None,
         gdf=None,
     ) -> None:
-        self.cfg        = cfg
-        self.main_gpkg  = main_gpkg
-        self.layers     = layers or []
-        self.crs        = crs
-        self._gdf       = gdf
+        self.cfg = cfg
+        self.main_gpkg = main_gpkg
+        self.layers = layers or []
+        self.crs = crs
+        self._gdf = gdf
 
-        # 1) Karten-Abmessungen
-        karte          = cfg.get("karte", {})
-        self.width_px  = karte.get("breite", 800)
+        # Karten-Abmessungen
+        karte = cfg.get("karte", {})
+        self.width_px = karte.get("breite", 800)
         self.height_px = karte.get("hoehe", 600)
 
-        # 2) Ausblenden / Hervorhebung / Farben / Linien
-        self.hide_cfg    = hide_cfg or cfg.get("ausblenden", {})
-        self.hl_cfg      = hl_cfg   or cfg.get("hervorhebung", {})
-        self.background  = cfg.get("background", {})
-        self.colors      = cfg.get("farben", {})
-        self.lines_cfg   = cfg.get("linien", {})
+        # Layer- und Darstellungsoptionen
+        self.hide_cfg = hide_cfg or cfg.get("ausblenden", {})
+        self.hl_cfg = hl_cfg or cfg.get("hervorhebung", {})
+        self.background = cfg.get("background", {})
+        self.colors = cfg.get("farben", {})
+        self.lines_cfg = cfg.get("linien", {})
 
-        # 3) Scalebar-Defaults sichern
+        # Scalebar-Defaults sichern
         self._scalebar_defaults = cfg.get("scalebar", {}).copy()
 
+    # ------------------------------------------------------------
+    # Hauptmethode
+    # ------------------------------------------------------------
     def build_figure(self) -> plt.Figure:
-        # Datenquelle: GUI-Override oder Merge  
-        if self._gdf is not None and not self._gdf.empty:
-            gdf = self._gdf
-        else:
-            gdf = merge_hauptland_layers(
-                self.main_gpkg,
-                self.layers,
-                hide_cfg=self.hide_cfg,
-                hl_cfg=self.hl_cfg,
-                crs=self.crs,
-            )
-
-        # Kein Resultat?
+        """Erzeugt die Karte als Matplotlib-Figure."""
+        gdf = self._get_geodataframe()
         if gdf is None or gdf.empty:
             return self._empty_figure()
 
-        # Haupt- vs. Nebengeometrien
         main_gdf = gdf[gdf["__is_main"]]
-        sub_gdf  = gdf[~gdf["__is_main"]]
+        sub_gdf = gdf[~gdf["__is_main"]]
 
-        # Figure + Achse
-        dpi   = self.cfg.get("export", {}).get("dpi", 300)
-        fig_w = self.width_px  / dpi
+        fig, ax, dpi = self._create_figure_and_axis()
+
+        self._apply_background(ax)
+        lw_grenze, lw_highlight = self._get_linewidths(dpi)
+
+        self._plot_subcountries(ax, sub_gdf, lw_grenze)
+        self._set_bbox(ax, main_gdf)
+        self._plot_maincountry(ax, main_gdf, lw_grenze)
+        self._plot_highlights(ax, main_gdf, lw_highlight)
+        self._add_scalebar(ax)
+
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        return fig
+
+    # ------------------------------------------------------------
+    # Datenquelle
+    # ------------------------------------------------------------
+    def _get_geodataframe(self):
+        """Lädt oder verwendet vorhandenes GeoDataFrame."""
+        if self._gdf is not None and not self._gdf.empty:
+            return self._gdf
+
+        return merge_hauptland_layers(
+            self.main_gpkg,
+            self.layers,
+            hide_cfg=self.hide_cfg,
+            hl_cfg=self.hl_cfg,
+            crs=self.crs,
+        )
+
+    # ------------------------------------------------------------
+    # Figure-Setup
+    # ------------------------------------------------------------
+    def _create_figure_and_axis(self):
+        """Erstellt Figure und Achse mit korrekten Abmessungen."""
+        dpi = self.cfg.get("export", {}).get("dpi", 300)
+        fig_w = self.width_px / dpi
         fig_h = self.height_px / dpi
         fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
         ax.set_axis_off()
+        return fig, ax, dpi
 
-        # Hintergrundfarbe
+    def _apply_background(self, ax):
+        """Setzt Hintergrundfarbe, falls nicht transparent."""
         if not self.background.get("transparent", False):
             bg = self.background.get("color", "#ffffff")
-            fig.patch.set_facecolor(bg)
+            ax.figure.patch.set_facecolor(bg)
             ax.set_facecolor(bg)
 
-        # Linienbreiten in Points
-        lw_grenze    = pixel_to_pt(self.lines_cfg.get("grenze_px", 1), dpi)
+    def _get_linewidths(self, dpi):
+        """Berechnet Linienbreiten in Points."""
+        lw_grenze = pixel_to_pt(self.lines_cfg.get("grenze_px", 1), dpi)
         lw_highlight = pixel_to_pt(self.lines_cfg.get("highlight_px", 1), dpi)
+        return lw_grenze, lw_highlight
 
-        # 1) Nebenländer zeichnen (skip empty)
+    # ------------------------------------------------------------
+    # Plot-Methoden
+    # ------------------------------------------------------------
+    def _plot_subcountries(self, ax, sub_gdf, lw_grenze):
+        """Zeichnet Nebenländer."""
         if not sub_gdf.empty:
             sub_gdf.plot(
                 ax=ax,
                 color=self.colors.get("nebenland", "lightgray"),
-                edgecolor=self.colors.get("grenze",   "gray"),
+                edgecolor=self.colors.get("grenze", "gray"),
                 linewidth=lw_grenze,
             )
 
-        # 2) Bounding Box
+    def _set_bbox(self, ax, main_gdf):
+        """Setzt Bounding Box basierend auf Hauptland."""
         aspect = self.width_px / self.height_px
-        bbox   = compute_bbox(main_gdf, aspect)
+        bbox = compute_bbox(main_gdf, aspect)
         ax.set_xlim(bbox[0], bbox[1])
         ax.set_ylim(bbox[2], bbox[3])
 
-        # 3) Hauptland
+    def _plot_maincountry(self, ax, main_gdf, lw_grenze):
+        """Zeichnet Hauptland."""
         main_gdf.plot(
             ax=ax,
             color=self.colors.get("hauptland", "white"),
-            edgecolor=self.colors.get("grenze",    "gray"),
+            edgecolor=self.colors.get("grenze", "gray"),
             linewidth=lw_grenze,
         )
 
-        # 4) Hervorhebungen
+    def _plot_highlights(self, ax, main_gdf, lw_highlight):
+        """Zeichnet Hervorhebungen."""
         if self.hl_cfg.get("aktiv", False) and "highlight" in main_gdf:
             to_high = main_gdf[main_gdf["highlight"]]
             if not to_high.empty:
                 to_high.plot(
                     ax=ax,
-                    color=self.colors.get("highlight",  "red"),
-                    edgecolor=self.colors.get("grenze",  "darkred"),
+                    color=self.colors.get("highlight", "red"),
+                    edgecolor=self.colors.get("grenze", "darkred"),
                     linewidth=lw_highlight,
                     zorder=3,
                 )
 
-        # 5) Scalebar (Defaults + GUI-Override)
+    def _add_scalebar(self, ax):
+        """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
         scalebar_cfg = {**self._scalebar_defaults, **current}
 
@@ -123,14 +168,12 @@ class MapBuilder:
             tmp_cfg = {**self.cfg, "scalebar": scalebar_cfg}
             add_scalebar(ax, extent, self.crs, tmp_cfg)
 
-        # 6) Ränder entfernen (wie save_map)
-        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-        return fig
-
+    # ------------------------------------------------------------
+    # Fallback
+    # ------------------------------------------------------------
     def _empty_figure(self) -> plt.Figure:
-        fig = plt.figure(
-            figsize=(self.width_px / 100, self.height_px / 100)
-        )
+        """Erstellt eine leere Figure mit Hinweistext."""
+        fig = plt.figure(figsize=(self.width_px / 100, self.height_px / 100))
         fig.text(
             0.5, 0.5, "Keine Daten vorhanden",
             ha="center", va="center"

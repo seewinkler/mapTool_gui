@@ -30,7 +30,9 @@
     "zoomlevel_vertikal": 0.0,
     "zoomlevel_horizontal": 0.0,
     "debug": true,
-    "dpi": 300
+    "dpi": 300,
+    "padding_x": 0.05,
+    "padding_y": 0.05
   },
   "background": {
     "color": "#2896BA",
@@ -54,5 +56,16 @@
     "padding_px": 20,
     "min_length_px": 80,
     "max_length_px": 200
+  },
+  "highlight_cfg": {
+    "aktiv": false,
+    "layer": "ADM_ADM_1",
+    "namen": []
+  },
+  "hide_cfg": {
+    "aktiv": false,
+    "bereiche": {
+      "ADM_ADM_1": []
+    }
   }
 }
