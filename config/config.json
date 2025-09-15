@@ -46,27 +46,17 @@
     "epsg_list": "assets/epsg_list.json"
   },
   "scalebar": {
-    "show": true,
-    "length_fraction": 0.07,
-    "position": "bottom-left",
-    "color": "white",
-    "linewidth_px": 1.5,
-    "font_px": 16,
-    "tick_fraction": 0.05,
-    "padding_px": 20,
-    "min_length_px": 80,
-    "max_length_px": 200
+    "show": false,
+    "position": "bottom-right"
   },
   "highlight_cfg": {
     "aktiv": false,
-    "layer": "ADM_ADM_1",
+    "layer": null,
     "namen": []
   },
   "hide_cfg": {
     "aktiv": false,
-    "bereiche": {
-      "ADM_ADM_1": []
-    }
+    "bereiche": {}
   },
   "output_dir": "D:\\Gotti\\Code\\mapTool_gui\\output"
 }

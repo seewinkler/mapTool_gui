@@ -3,12 +3,8 @@ import logging
 from typing import Any, Dict
 
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QPlainTextEdit,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QPlainTextEdit, QTabWidget, QLabel, QGroupBox, QFormLayout, QGridLayout
 )
 
 from gui.drop_widgets import DropPanel
@@ -17,7 +13,7 @@ from gui.log_viewer import QTextEditLogger
 from gui.controls.map_settings import MapSettingsGroup
 from gui.controls.scalebar_settings import ScalebarSettingsGroup
 from gui.controls.background_settings import BackgroundSettingsGroup
-from gui.controls.layer_selection import LayerSelectionGroup
+from gui.controls.layer_selection import LayerSelectionGroup, LayerFilterGroup
 from gui.controls.export_settings import ExportSettingsGroup
 
 
@@ -61,37 +57,49 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         ui_cfg = self.config.get("ui", {})
         self.setWindowTitle(ui_cfg.get("window_title", "mapTool GUI"))
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1100, 720)
 
         central = QWidget(self)
         self.setCentralWidget(central)
 
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(8, 8, 8, 8)
-        main_layout.setSpacing(6)
+        # Haupt-Container: zwei Spalten
+        root = QHBoxLayout(central)
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(8)
 
-        # DropPanel
+        # ========== LINKE SPALTE ==========
+        left_col = QVBoxLayout()
+        left_col.setSpacing(8)
+        root.addLayout(left_col, stretch=1)
+        self._left_col_layout = left_col  # für Logging-Widget
+
+        # Datei-Upload (Hauptland, Nebenländer, Overlay)
         self.drop_panel = DropPanel(copy_to_temp=True)
-        main_layout.addWidget(self.drop_panel)
+        left_col.addWidget(self.drop_panel, stretch=1)
 
-        # Split: Canvas & Controls
-        content_layout = QHBoxLayout()
-        content_layout.setSpacing(6)
-        main_layout.addLayout(content_layout)
-
-        # MapCanvas
+        # Karten-Vorschau
         karte_cfg = self.config.get("karte", {})
         w = karte_cfg.get("breite", 800)
         h = karte_cfg.get("hoehe", 600)
         self.map_canvas = MapCanvas(self.composer, width=w, height=h)
-        content_layout.addWidget(self.map_canvas, stretch=3)
+        left_col.addWidget(self.map_canvas, stretch=2)
 
-        # Controls-Palette
-        controls_layout = QVBoxLayout()
-        controls_layout.setSpacing(6)
-        content_layout.addLayout(controls_layout, stretch=1)
+        # ========== RECHTE SPALTE ==========
+        right_col = QVBoxLayout()
+        right_col.setSpacing(8)
+        root.addLayout(right_col, stretch=1)
 
-        # MapSettingsGroup
+        # Tabs
+        tabs = QTabWidget()
+        right_col.addWidget(tabs, stretch=1)
+
+        # -- Tab 1: Hauptfunktionen --
+        tab_main = QWidget()
+        tabs.addTab(tab_main, "Hauptfunktionen")
+        main_tab_layout = QVBoxLayout(tab_main)
+        main_tab_layout.setSpacing(8)
+
+        # EPSG, Breite, Höhe
         self.map_settings = MapSettingsGroup(
             composer=self.composer,
             on_epsg=lambda: None,
@@ -100,18 +108,25 @@ class MainWindow(QMainWindow):
         self.btn_epsg = self.map_settings.btn_epsg
         self.sp_w = self.map_settings.sp_w
         self.sp_h = self.map_settings.sp_h
-        controls_layout.addWidget(self.map_settings)
+        main_tab_layout.addWidget(self.map_settings)
 
-        # ScalebarSettingsGroup
+        # Ausgewählte Layer
+        self.layer_selection = LayerSelectionGroup(
+            on_layers_changed=lambda _: None
+        )
+        self.lst_layers = self.layer_selection.lst_layers
+        main_tab_layout.addWidget(self.layer_selection)
+
+        # Scalebar
         self.scalebar_settings = ScalebarSettingsGroup(
             composer=self.composer,
             on_changed=lambda _: None
         )
         self.cb_sb_show = self.scalebar_settings.cb_sb_show
         self.cmb_sb_pos = self.scalebar_settings.cmb_sb_pos
-        controls_layout.addWidget(self.scalebar_settings)
+        main_tab_layout.addWidget(self.scalebar_settings)
 
-        # BackgroundSettingsGroup
+        # Hintergrund
         self.bg_settings = BackgroundSettingsGroup(
             composer=self.composer,
             on_choose_color=lambda: None,
@@ -119,51 +134,161 @@ class MainWindow(QMainWindow):
         )
         self.btn_col = self.bg_settings.btn_col
         self.cb_transp = self.bg_settings.cb_transp
-        controls_layout.addWidget(self.bg_settings)
+        main_tab_layout.addWidget(self.bg_settings)
 
-        # LayerSelectionGroup
-        self.layer_selection = LayerSelectionGroup(
-            on_layers_changed=lambda _: None,
+        main_tab_layout.addStretch(1)
+        # -- Tab 2: Zusatzfunktionen --
+        tab_extra = QWidget()
+        tabs.addTab(tab_extra, "Zusatzfunktionen")
+        extra_tab_layout = QVBoxLayout(tab_extra)
+        extra_tab_layout.setSpacing(8)
+
+        # Ausblenden/Hervorheben
+        self.layer_filter = LayerFilterGroup(
             on_hide_changed=lambda _: None,
             on_highlight_changed=lambda _: None
         )
-        self.lst_layers = self.layer_selection.lst_layers
-        self.lst_hide = self.layer_selection.lst_hide
-        self.lst_high = self.layer_selection.lst_high
-        controls_layout.addWidget(self.layer_selection)
+        self.lst_hide = self.layer_filter.lst_hide
+        self.lst_high = self.layer_filter.lst_high
+        extra_tab_layout.addWidget(self.layer_filter)
 
-        # ExportSettingsGroup
+        # Grenzen
+        group_bounds = QGroupBox("Grenzen")
+        gb_layout = QFormLayout(group_bounds)
+        gb_layout.addRow(QLabel("Admin-Level-Optionen und Farben (Controller-Logik folgt)."))
+        extra_tab_layout.addWidget(group_bounds)
+
+        # Overlay-Optionen
+        self.group_overlay = QGroupBox("Overlay")
+        ov_layout = QFormLayout(self.group_overlay)
+        ov_layout.addRow(QLabel("Farbe, Transparenz, Entfernen (sichtbar wenn Overlay vorhanden)."))
+        extra_tab_layout.addWidget(self.group_overlay)
+        self.group_overlay.setVisible(False)
+
+        # Verbindung: DropZone-Änderung → Sichtbarkeit aktualisieren + Overlay laden
+        self.drop_panel.drop_overlay.dropChanged.connect(self._on_overlay_dropped)
+
+        # Positionierung
+        group_pan = QGroupBox("Positionierung")
+        grid = QGridLayout(group_pan)
+        grid.addWidget(QPushButton("↑"), 0, 1)
+        grid.addWidget(QPushButton("←"), 1, 0)
+        grid.addWidget(QPushButton("→"), 1, 2)
+        grid.addWidget(QPushButton("↓"), 2, 1)
+        grid.addWidget(QLabel("X-Offset:"), 3, 0)
+        grid.addWidget(QLabel("Y-Offset:"), 4, 0)
+        grid.addWidget(QPushButton("Position zurücksetzen"), 5, 0, 1, 3)
+        extra_tab_layout.addWidget(group_pan)
+
+        extra_tab_layout.addStretch(1)
+
+        # Unterer Bereich rechts
+        bottom_panel = QVBoxLayout()
+        bottom_panel.setSpacing(6)
+        right_col.addLayout(bottom_panel, stretch=0)
+
         self.export_settings = ExportSettingsGroup()
         self.cb_png = self.export_settings.cb_png
         self.cb_svg = self.export_settings.cb_svg
-        controls_layout.addWidget(self.export_settings)
+        bottom_panel.addWidget(self.export_settings)
 
-        # Log-Widget
-        self.log_widget = QPlainTextEdit(self)
-        self.log_widget.setReadOnly(True)
-        controls_layout.addWidget(self.log_widget, stretch=1)
-
-        # Neue Buttons: Vorschau aktualisieren & Zurücksetzen
         btn_row = QHBoxLayout()
         self.btn_preview_update = QPushButton("Vorschau aktualisieren", self)
         self.btn_reset = QPushButton("Zurücksetzen", self)
         btn_row.addWidget(self.btn_preview_update)
         btn_row.addWidget(self.btn_reset)
-        controls_layout.addLayout(btn_row)
+        bottom_panel.addLayout(btn_row)
+        self.btn_reset.clicked.connect(self._on_reset_clicked)
 
-        # Render-Button
         self.btn_render = QPushButton("Karte rendern", self)
-        controls_layout.addWidget(self.btn_render)
+        bottom_panel.addWidget(self.btn_render)
+
+        # Startzustand Overlay-Optionen setzen
+        self._update_overlay_visibility()
+
+    # ------------------------------------------------------------
+    # Overlay-Optionen sichtbar/unsichtbar schalten
+    # ------------------------------------------------------------
+    def _update_overlay_visibility(self):
+        has_overlay = bool(self.drop_panel.get_overlay_paths())
+        self.group_overlay.setVisible(has_overlay)
+
+    # ------------------------------------------------------------
+    # Overlay-Drop-Handler
+    # ------------------------------------------------------------
+    def _on_overlay_dropped(self):
+        """Wird aufgerufen, wenn in die Overlay-Drop-Zone eine Datei gelegt oder entfernt wird."""
+        paths = self.drop_panel.get_overlay_paths()
+        if paths:
+            self.composer.set_overlay(paths[0])
+            logging.info(f"Overlay geladen: {paths[0]}")
+        else:
+            self.composer.set_overlay(None)
+            logging.info("Overlay entfernt.")
+        self._update_overlay_visibility()
+        self.map_canvas.refresh(preview=True)
+
+    # ------------------------------------------------------------
+    # Reset-Handler
+    # ------------------------------------------------------------
+    def _on_reset_clicked(self):
+        """Setzt die UI auf den Ausgangszustand zurück."""
+        # Drop-Zonen leeren
+        self.drop_panel.clear()
+
+        # Overlay-Optionen ausblenden
+        self.composer.set_overlay(None)
+        self._update_overlay_visibility()
+
+        # Karten-Vorschau zurücksetzen
+        karte_cfg = self.config.get("karte", {})
+        w = karte_cfg.get("breite", 800)
+        h = karte_cfg.get("hoehe", 600)
+        self.map_canvas.setFixedSize(w, h)
+        self.map_canvas.refresh(preview=True)
+
+        # Hintergrund zurücksetzen
+        bg_cfg = self.config.get("background", {})
+        self.cb_transp.setChecked(bg_cfg.get("transparent", False))
+        self.btn_col.hide()
+
+        # Scalebar zurücksetzen
+        sb = self.config.get("scalebar", {})
+        self.cb_sb_show.setChecked(sb.get("show", False))
+        self.cmb_sb_pos.setCurrentText(sb.get("position", "bottom-right"))
+
+        # Dimensionen zurücksetzen
+        self.sp_w.setValue(w)
+        self.sp_h.setValue(h)
+
+        # Layer-Listen leeren
+        self.lst_layers.clear()
+        self.lst_hide.clear()
+        self.lst_high.clear()
+
+        # Export-Formate zurücksetzen
+        self.cb_png.setChecked(False)
+        self.cb_svg.setChecked(False)
+
+        # Log leeren
+        if hasattr(self, "log_widget"):
+            self.log_widget.clear()
 
     # ------------------------------------------------------------
     # Logging
     # ------------------------------------------------------------
     def _setup_logging(self) -> None:
         """Richtet Logging-Ausgabe ins Log-Widget ein."""
+        self.log_widget = QPlainTextEdit(self)
+        self.log_widget.setReadOnly(True)
         handler = QTextEditLogger(self.log_widget)
         logging.getLogger().addHandler(handler)
         lvl = self.config.get("logging", {}).get("level", "INFO").upper()
         logging.getLogger().setLevel(getattr(logging, lvl, logging.INFO))
+
+        # Log-Widget in der linken Spalte unter der Vorschau anzeigen
+        if hasattr(self, "_left_col_layout"):
+            self._left_col_layout.addWidget(self.log_widget, stretch=0)
 
     # ------------------------------------------------------------
     # UI-Defaults aus CONFIG
@@ -187,6 +312,6 @@ class MainWindow(QMainWindow):
         self.sp_w.setValue(w)
         self.sp_h.setValue(h)
 
+        # Canvas initial dimensionieren und Preview rendern
         self.map_canvas.setFixedSize(w, h)
-        # Vorschau-Refresh (schnell, halbe Pixelmaße, vereinfachte Geometrien)
         self.map_canvas.refresh(preview=True)

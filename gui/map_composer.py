@@ -47,8 +47,8 @@ class MapComposer:
             "transparent": bg_cfg.get("transparent", False),
         }
 
-        # Export-Formate
-        self.export_formats = config.get("export", {}).get("formats", ["png"])
+        # Export-Formate – Fallback, falls leer
+        self.export_formats = config.get("export", {}).get("formats") or ["png"]
 
         # Hide- und Highlight-Configs
         self.hide_cfg = config.get("hide_cfg", {}) or {"aktiv": False, "bereiche": {}}
@@ -60,6 +60,9 @@ class MapComposer:
         # GPKG-Dateien
         self.main_gpkg: Optional[str] = None
         self.sub_gpkgs: List[str] = []
+
+        # Overlay-Datei
+        self.overlay_file: Optional[str] = None
 
     # ------------------------------------------------------------
     # Setter-Methoden
@@ -98,27 +101,33 @@ class MapComposer:
         self.height_px = height
 
     def set_export_formats(self, formats: List[str]) -> None:
-        self.export_formats = list(formats)
+        self.export_formats = formats or ["png"]
+
+    def set_overlay(self, overlay_path: Optional[str]) -> None:
+        """Setzt oder entfernt den Overlay-Layer."""
+        self.overlay_file = overlay_path
 
     # ------------------------------------------------------------
     # Datenaufbereitung
     # ------------------------------------------------------------
     def _get_combined_gdf(self) -> Optional[GeoDataFrame]:
-        if not self.main_gpkg:
-            return None
-
+        import os
         parts = []
 
-        main_gdf = merge_hauptland_layers(
-            self.main_gpkg,
-            self.primary_layers,
-            hide_cfg=self.hide_cfg,
-            hl_cfg=self.hl_cfg,
-            crs=self.crs
-        )
-        main_gdf["__is_main"] = True
-        parts.append(main_gdf)
+        # --- Hauptland ---
+        if self.main_gpkg:
+            main_gdf = merge_hauptland_layers(
+                self.main_gpkg,
+                self.primary_layers,
+                hide_cfg=self.hide_cfg,
+                hl_cfg=self.hl_cfg,
+                crs=self.crs
+            )
+            if main_gdf is not None and not main_gdf.empty:
+                main_gdf["__is_main"] = True
+                parts.append(main_gdf)
 
+        # --- Nebenländer ---
         for sub in self.sub_gpkgs:
             if not sub:
                 continue
@@ -130,10 +139,84 @@ class MapComposer:
                 hl_cfg=self.hl_cfg,
                 crs=self.crs
             )
-            sub_gdf["__is_main"] = False
-            parts.append(sub_gdf)
+            if sub_gdf is not None and not sub_gdf.empty:
+                sub_gdf["__is_main"] = False
+                parts.append(sub_gdf)
 
-        return pd.concat(parts, ignore_index=True)
+        # --- Overlay ---
+        if self.overlay_file:
+            try:
+                ext = os.path.splitext(self.overlay_file)[1].lower()
+                if ext == ".shp":
+                    layers = None  # Shapefile → kein Layername
+                else:
+                    layers = get_simplest_layer(self.overlay_file) or [self.primary_layers[0]]
+
+                overlay_gdf = merge_hauptland_layers(
+                    self.overlay_file,
+                    layers,
+                    hide_cfg={"aktiv": False, "bereiche": {}},
+                    hl_cfg={"aktiv": False, "layer": None, "namen": []},
+                    crs=self.crs
+                )
+                if overlay_gdf is not None and not overlay_gdf.empty:
+                    overlay_gdf["__is_overlay"] = True
+                    parts.append(overlay_gdf)
+            except Exception as e:
+                print(f"Fehler beim Laden des Overlays: {e}")
+
+        # --- Wenn nichts da ist, abbrechen ---
+        if not parts:
+            return None
+
+        # --- Nur nicht-leere Frames zusammenführen ---
+        non_empty = [p for p in parts if p is not None and not p.empty]
+        if not non_empty:
+            return None
+
+        gdf = pd.concat(non_empty, ignore_index=True)
+
+        # --- Sanfte Bereinigung ---
+
+        if "geometry" in gdf.columns:
+            gdf = gdf[gdf.geometry.notna() & ~gdf.geometry.is_empty]
+            try:
+                from shapely.validation import make_valid
+                gdf["geometry"] = gdf["geometry"].apply(make_valid)
+            except ImportError:
+                try:
+                    gdf["geometry"] = gdf["geometry"].buffer(0)
+                except Exception:
+                    pass
+
+        for col in gdf.columns:
+            if gdf[col].dtype == "object" or pd.api.types.is_categorical_dtype(gdf[col]):
+                gdf[col] = gdf[col].fillna("")
+
+        # --- Debug-Ausgabe ---
+        print("DEBUG: GDF dtypes\n", gdf.dtypes)
+        if "__is_main" in gdf.columns:
+            print("DEBUG: __is_main unique values:", gdf["__is_main"].unique())
+        if "highlight" in gdf.columns:
+            print("DEBUG: highlight unique values:", gdf["highlight"].unique())
+
+        # --- Typbereinigung ---
+        if "__is_main" in gdf.columns:
+            try:
+                gdf["__is_main"] = gdf["__is_main"].astype(bool)
+            except Exception as e:
+                print("WARN: __is_main cast failed:", e)
+                gdf["__is_main"] = False
+
+        if "highlight" in gdf.columns:
+            try:
+                gdf["highlight"] = gdf["highlight"].astype(bool)
+            except Exception as e:
+                print("WARN: highlight cast failed:", e)
+                gdf["highlight"] = False
+
+        return gdf
+
 
     # ------------------------------------------------------------
     # Figure-Erstellung
@@ -152,9 +235,6 @@ class MapComposer:
         return fig
 
     def compose(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
-        if not self.main_gpkg:
-            return self._create_empty_figure()
-
         combined = self._get_combined_gdf()
         if combined is None or combined.empty:
             return self._create_empty_figure()
@@ -211,11 +291,15 @@ class MapComposer:
 
         if preview_mode:
             combined = self._get_combined_gdf()
-            if combined is not None:
+            if combined is not None and not combined.empty:
                 combined = combined.copy()
-                combined["geometry"] = combined["geometry"].simplify(
-                    tolerance=0.01, preserve_topology=True
-                )
+                # Geometrien weiter vereinfachen für die schnelle Vorschau
+                try:
+                    combined["geometry"] = combined["geometry"].simplify(
+                        tolerance=0.01, preserve_topology=True
+                    )
+                except Exception:
+                    pass
 
                 builder = MapBuilder(
                     cfg=self.config,
@@ -233,10 +317,11 @@ class MapComposer:
 
                 fig = builder.build_figure(preview_mode=True, preview_scale=preview_scale)
             else:
-                fig = self.compose(preview_mode=True, preview_scale=preview_scale)
+                fig = self._create_empty_figure()
         else:
             fig = self.compose(preview_mode=False)
 
+        # Für die Vorschau immer PNG in den Speicher schreiben
         MapExporter.save(fig, buffer, ["png"], transparent=self.background_cfg["transparent"])
         buffer.seek(0)
         return Image.open(buffer)

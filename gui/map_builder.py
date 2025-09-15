@@ -1,16 +1,12 @@
-# gui/map_builder.py
-
 import matplotlib.pyplot as plt
 from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
 from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
 
-
 def pixel_to_pt(px: float, dpi: float) -> float:
     """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
     return px * 72.0 / dpi
-
 
 class MapBuilder:
     """
@@ -58,18 +54,49 @@ class MapBuilder:
         if gdf is None or gdf.empty:
             return self._empty_figure()
 
-        main_gdf = gdf[gdf["__is_main"]]
-        sub_gdf = gdf[~gdf["__is_main"]]
+        # --- Typbereinigung, falls Spalten nicht bool sind ---
+        for col in ["__is_main", "__is_overlay", "highlight"]:
+            if col in gdf.columns and gdf[col].dtype != bool:
+                try:
+                    gdf[col] = gdf[col].astype(bool)
+                except Exception as e:
+                    print(f"WARN: {col} cast failed:", e)
+                    gdf[col] = False
+
+        # Aufteilen in Hauptland, Nebenländer, Overlay
+        main_gdf = gdf[gdf["__is_main"]] if "__is_main" in gdf.columns else gdf.iloc[0:0]
+        sub_gdf = gdf[~gdf["__is_main"]] if "__is_main" in gdf.columns else gdf
+        overlay_gdf = gdf[gdf["__is_overlay"]] if "__is_overlay" in gdf.columns else gdf.iloc[0:0]
 
         fig, ax, dpi = self._create_figure_and_axis()
 
         self._apply_background(ax)
         lw_grenze, lw_highlight = self._get_linewidths(dpi)
 
+        # 1. Nebenländer
         self._plot_subcountries(ax, sub_gdf, lw_grenze)
-        self._set_bbox(ax, main_gdf)
+
+        # 2. Bounding Box auf Hauptland setzen
+        if not main_gdf.empty:
+            self._set_bbox(ax, main_gdf)
+
+        # 3. Hauptland
         self._plot_maincountry(ax, main_gdf, lw_grenze)
+
+        # 4. Highlights
         self._plot_highlights(ax, main_gdf, lw_highlight)
+
+        # 5. Overlay zuletzt, damit es oben liegt
+        if not overlay_gdf.empty:
+            overlay_gdf.plot(
+                ax=ax,
+                color="none",  # keine Füllung, nur Konturen
+                edgecolor=self.colors.get("overlay", "red"),
+                linewidth=self.lines_cfg.get("overlay_px", 1),
+                zorder=5
+            )
+
+        # 6. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -138,16 +165,22 @@ class MapBuilder:
 
     def _plot_maincountry(self, ax, main_gdf, lw_grenze):
         """Zeichnet Hauptland."""
-        main_gdf.plot(
-            ax=ax,
-            color=self.colors.get("hauptland", "white"),
-            edgecolor=self.colors.get("grenze", "gray"),
-            linewidth=lw_grenze,
-        )
+        if not main_gdf.empty:
+            main_gdf.plot(
+                ax=ax,
+                color=self.colors.get("hauptland", "white"),
+                edgecolor=self.colors.get("grenze", "gray"),
+                linewidth=lw_grenze,
+            )
 
     def _plot_highlights(self, ax, main_gdf, lw_highlight):
         """Zeichnet Hervorhebungen."""
-        if self.hl_cfg.get("aktiv", False) and "highlight" in main_gdf:
+        if (
+            self.hl_cfg.get("aktiv", False)
+            and not main_gdf.empty
+            and "highlight" in main_gdf.columns
+            and main_gdf["highlight"].dtype == bool
+        ):
             to_high = main_gdf[main_gdf["highlight"]]
             if not to_high.empty:
                 to_high.plot(

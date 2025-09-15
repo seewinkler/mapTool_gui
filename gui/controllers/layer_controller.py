@@ -124,11 +124,15 @@ class LayerController:
             self.composer.primary_layers[0]
             if self.composer.primary_layers else ""
         )
-        self.composer.set_hide({layer: hide_list})
+        self.composer.set_hide({layer: hide_list} if layer else {})
 
-        # 3) Highlight-Liste basierend auf hide_list neu befüllen
+        # 3) Highlight-Liste nur befüllen, wenn gültige Spalte vorhanden
         self.view.lst_high.clear()
-        if self._name_col:
+        if (
+            self._gdf_main is not None
+            and self._name_col
+            and self._name_col in self._gdf_main.columns
+        ):
             raw = (
                 self._gdf_main[self._name_col]
                 .dropna()
@@ -146,6 +150,7 @@ class LayerController:
         if self.main_ctrl:
             self.main_ctrl.mark_preview_dirty()
 
+
     def handle_highlight_changed(self, item: QListWidgetItem) -> None:
         """Wird aufgerufen, wenn in lst_high eine Region ange- oder abgehakt wird."""
         hl = [
@@ -157,8 +162,23 @@ class LayerController:
             self.composer.primary_layers[0]
             if self.composer.primary_layers else ""
         )
-        self.composer.set_highlight(layer, hl)
+
+        # Nur setzen, wenn gültige Spalte vorhanden
+        if (
+            self._gdf_main is not None
+            and self._name_col
+            and self._name_col in self._gdf_main.columns
+        ):
+            self.composer.set_highlight(layer, hl)
+        else:
+            # Overlay oder kein gültiger Name-Col → Highlight deaktivieren
+            self.composer.set_highlight("", [])
 
         # Nur dirty markieren
         if self.main_ctrl:
             self.main_ctrl.mark_preview_dirty()
+
+
+            # Nur dirty markieren
+            if self.main_ctrl:
+                self.main_ctrl.mark_preview_dirty()
