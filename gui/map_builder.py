@@ -3,6 +3,8 @@ from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
 from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
+from utils.constants import BOUNDARY_TO_COLUMN
+
 import pandas as pd
 
 def pixel_to_pt(px: float, dpi: float) -> float:
@@ -12,7 +14,7 @@ def pixel_to_pt(px: float, dpi: float) -> float:
 class MapBuilder:
     """
     Baut eine Matplotlib-Figure aus Geodaten (Haupt- und Nebenländer),
-    inklusive Hintergrund, Layerfarben, Hervorhebungen und Maßstabsleiste.
+    inklusive Hintergrund, Layerfarben, Hervorhebungen, Grenzen und Maßstabsleiste.
     """
 
     def __init__(
@@ -112,7 +114,10 @@ class MapBuilder:
                 zorder=5
             )
 
-        # 6. Maßstabsleiste
+        # 6. Admin-Level-Grenzen
+        self._plot_boundaries(ax, gdf, dpi)
+
+        # 7. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -207,6 +212,40 @@ class MapBuilder:
                     zorder=3,
                 )
 
+    def _plot_boundaries(self, ax, gdf, dpi):
+        """Zeichnet Admin-Level-Grenzen basierend auf config['boundaries']."""
+        boundaries_cfg = self.cfg.get("boundaries", {})
+        if not boundaries_cfg:
+            return
+
+        for level, opts in boundaries_cfg.items():
+            if not opts.get("show", False):
+                continue
+
+            col = BOUNDARY_TO_COLUMN.get(level)
+            if not col or col not in gdf.columns:
+                print(f"[DEBUG] Spalte für {level} nicht gefunden.")
+                continue
+
+            gdf_level = gdf.dropna(subset=[col])
+            if gdf_level.empty:
+                print(f"[DEBUG] Keine Features für {level} gefunden.")
+                continue
+
+            lw = pixel_to_pt(opts.get("width", 1.0), dpi)
+            color = opts.get("color", "#000000")
+            style = opts.get("style", "solid")
+
+            print(f"[DEBUG] Zeichne {len(gdf_level)} Features für {level} ({col})")
+
+            gdf_level.boundary.plot(
+                ax=ax,
+                edgecolor=color,
+                linewidth=lw,
+                linestyle=style,
+                zorder=6
+            )
+            
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
@@ -226,18 +265,3 @@ class MapBuilder:
                 preview_mode=preview_mode,
                 preview_scale=preview_scale
             )
-
-    # ------------------------------------------------------------
-    # Leere Figure
-    # ------------------------------------------------------------
-    def _empty_figure(self) -> plt.Figure:
-        """Erstellt eine leere Figure (Platzhalter)."""
-        fig, ax, _ = self._create_figure_and_axis()
-        ax.text(
-            0.5, 0.5,
-            "Keine Daten",
-            ha="center", va="center",
-            fontsize=14,
-            transform=ax.transAxes
-        )
-        return fig

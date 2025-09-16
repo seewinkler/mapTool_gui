@@ -5,8 +5,9 @@ from typing import Any, Dict
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QPlainTextEdit, QTabWidget, QLabel, QGroupBox, QFormLayout, QGridLayout,
-    QDoubleSpinBox, QCheckBox, QColorDialog
+    QDoubleSpinBox, QCheckBox, QColorDialog, QListWidgetItem
 )
+from PySide6.QtCore import Qt
 
 from gui.drop_widgets import DropPanel
 from gui.map_canvas import MapCanvas
@@ -16,6 +17,7 @@ from gui.controls.scalebar_settings import ScalebarSettingsGroup
 from gui.controls.background_settings import BackgroundSettingsGroup
 from gui.controls.layer_selection import LayerSelectionGroup, LayerFilterGroup
 from gui.controls.export_settings import ExportSettingsGroup
+from gui.controls.boundary_settings import BoundarySettingsGroup
 
 
 class MainWindow(QMainWindow):
@@ -34,6 +36,7 @@ class MainWindow(QMainWindow):
         self._overlay_colors: Dict[str, str] = {}
 
         self._apply_initial_composer_settings()
+        self.layers = []
         self._build_ui()
         self._setup_logging()
         self._apply_config_defaults()
@@ -116,10 +119,17 @@ class MainWindow(QMainWindow):
 
         # Ausgewählte Layer
         self.layer_selection = LayerSelectionGroup(
-            on_layers_changed=lambda _: None
+            on_layers_changed=self._on_layers_changed
         )
         self.lst_layers = self.layer_selection.lst_layers
         main_tab_layout.addWidget(self.layer_selection)
+
+        # Beispiel: Layerliste initial füllen (falls keine dynamische Quelle vorhanden)
+        for layer in ["adm_adm_0", "adm_adm_1", "adm_adm_2"]:
+            item = QListWidgetItem(layer)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+            self.lst_layers.addItem(item)
 
         # Scalebar
         self.scalebar_settings = ScalebarSettingsGroup(
@@ -158,10 +168,8 @@ class MainWindow(QMainWindow):
         extra_tab_layout.addWidget(self.layer_filter)
 
         # Grenzen
-        group_bounds = QGroupBox("Grenzen")
-        gb_layout = QFormLayout(group_bounds)
-        gb_layout.addRow(QLabel("Admin-Level-Optionen und Farben (Controller-Logik folgt)."))
-        extra_tab_layout.addWidget(group_bounds)
+        self.boundary_settings = BoundarySettingsGroup(self.config, levels=[])
+        extra_tab_layout.addWidget(self.boundary_settings)
 
         # Overlay-Optionen – erweitert
         self.group_overlay = QGroupBox("Overlay")
@@ -229,7 +237,6 @@ class MainWindow(QMainWindow):
 
         # Neue Verbindung: Overlay-Style erst bei Klick übernehmen
         self.btn_preview_update.clicked.connect(self._on_preview_update_clicked)
-
         self.btn_reset.clicked.connect(self._on_reset_clicked)
 
         self.btn_render = QPushButton("Karte rendern", self)
@@ -237,7 +244,8 @@ class MainWindow(QMainWindow):
 
         # Startzustand Overlay-Optionen setzen
         self._update_overlay_visibility()
-            # ------------------------------------------------------------
+
+    # ------------------------------------------------------------
     # Overlay-Helfer
     # ------------------------------------------------------------
     def _choose_overlay_color(self, target: str) -> None:
@@ -283,8 +291,13 @@ class MainWindow(QMainWindow):
     # Vorschau aktualisieren
     # ------------------------------------------------------------
     def _on_preview_update_clicked(self) -> None:
-        """Übernimmt aktuelle Overlay-Optionen in die Config und rendert die Vorschau."""
-        # Bisherige Style-Config holen oder Default
+        """
+        Übernimmt aktuelle Overlay- und Boundary-Optionen in die Config
+        und rendert die Vorschau.
+        """
+        # -----------------------------
+        # Overlay-Style übernehmen
+        # -----------------------------
         style_cfg = dict(self.config.get("overlay_style", {}))
 
         # Aus temporären Farbwahlen übernehmen (wenn gesetzt), sonst bisherige Werte behalten
@@ -305,7 +318,16 @@ class MainWindow(QMainWindow):
         # Zurück in die Config
         self.config["overlay_style"] = style_cfg
 
+        # -----------------------------
+        # Boundary-Settings übernehmen
+        # -----------------------------
+        if hasattr(self, "boundary_settings"):
+            # schreibt die Werte aus den Controls in self.config["boundaries"]
+            self.boundary_settings.apply_to_config()
+
+        # -----------------------------
         # Vorschau neu rendern
+        # -----------------------------
         self.map_canvas.refresh(preview=True)
 
     # ------------------------------------------------------------
@@ -407,3 +429,34 @@ class MainWindow(QMainWindow):
         # Canvas initial dimensionieren und Preview rendern
         self.map_canvas.setFixedSize(w, h)
         self.map_canvas.refresh(preview=True)
+
+    # ------------------------------------------------------------
+    # Layer-Auswahl → Grenzen-Controls
+    # ------------------------------------------------------------
+    def _on_layers_changed(self, _=None):
+        """Wird aufgerufen, wenn sich die Layer-Auswahl im GUI ändert."""
+        from utils.constants import LAYER_TO_BOUNDARY
+
+        # 1) Ausgewählte Layer (nur Qt.Checked) einsammeln
+        selected = []
+        for i in range(self.lst_layers.count()):
+            item = self.lst_layers.item(i)
+            if item.checkState() == Qt.Checked:
+                selected.append(item.text())
+
+        print("[DEBUG] Ausgewählte Layer (roh):", selected)
+
+        # 2) Namen normalisieren und mappen
+        levels = []
+        for name in selected:
+            key = name.lower().strip()
+            if key in LAYER_TO_BOUNDARY:
+                levels.append(LAYER_TO_BOUNDARY[key])
+            else:
+                print(f"[DEBUG] Kein Mapping für Layer '{name}' (normalisiert: '{key}') – wird ignoriert.")
+
+        print("[DEBUG] Abgeleitete Levels:", levels)
+
+        # 3) Auswahl speichern und GUI aktualisieren
+        self.layers = selected
+        self.boundary_settings.update_levels(levels)

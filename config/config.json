@@ -64,5 +64,25 @@
     "line_width": 0,
     "show_lines": false
   },
+  "boundaries": {
+  "ADM_0": {
+    "show": true,
+    "color": "#000000",
+    "width": 1.0,
+    "style": "solid"
+  },
+  "ADM_1": {
+    "show": true,
+    "color": "#000000",
+    "width": 0.8,
+    "style": "dashed"
+  },
+  "ADM_2": {
+    "show": false,
+    "color": "#00ff00",
+    "width": 0.5,
+    "style": "dotted"
+  }
+},
   "output_dir": "D:\\Gotti\\Code\\mapTool_gui\\output"
 }
