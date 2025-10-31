@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
         main_tab_layout.addWidget(self.layer_selection)
 
         # Beispiel: Layerliste initial füllen (falls keine dynamische Quelle vorhanden)
-        for layer in ["adm_adm_0", "adm_adm_1", "adm_adm_2"]:
+        for layer in []:
             item = QListWidgetItem(layer)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Unchecked)
