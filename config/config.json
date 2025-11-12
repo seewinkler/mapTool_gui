@@ -36,7 +36,7 @@
   },
   "background": {
     "color": "#2896BA",
-    "transparent": false
+    "transparent": true
   },
   "linien": {
     "grenze_px": 1,
@@ -45,7 +45,17 @@
   "assets": {
     "epsg_list": "assets/epsg_list.json"
   },
-  "scalebar": {},
+  "scalebar": {
+    "show": true,
+    "position": "bottom-right",
+    "length_fraction": 0.07,
+    "min_length_px": 50,
+    "max_length_px": 200,
+    "linewidth_px": 1.5,
+    "font_px": 16,
+    "color": "#000000",
+    "padding_px": 20
+  },
   "highlight_cfg": {
     "aktiv": false,
     "layer": null,
@@ -85,7 +95,7 @@
       "style": "dotted"
     }
   },
-  "output_dir": "D:\\Gotti\\Code\\mapTool_gui\\output",
+  "output_dir": "D:\\tmp",
   "styles": {
     "hauptland": {
       "fill": "#538B32",
