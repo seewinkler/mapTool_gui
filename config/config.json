@@ -8,10 +8,7 @@
       "matplotlib.font_manager"
     ]
   },
-  "hauptland": [
-    "ADM_ADM_0",
-    "ADM_ADM_1"
-  ],
+  "hauptland": [],
   "nebenlaender": "ADM_ADM_0",
   "farben": {
     "hauptland": "#538B32",
@@ -53,7 +50,7 @@
     "max_length_px": 200,
     "linewidth_px": 1.5,
     "font_px": 16,
-    "color": "#000000",
+    "color": "#FFFFFF",
     "padding_px": 20
   },
   "highlight_cfg": {
@@ -62,12 +59,8 @@
     "namen": []
   },
   "hide_cfg": {
-    "aktiv": true,
-    "bereiche": {
-      "ADM_ADM_1": [
-        "Niederösterreich"
-      ]
-    }
+    "aktiv": false,
+    "bereiche": {}
   },
   "overlay_style": {
     "fill_color": "#2896BA",
@@ -93,9 +86,12 @@
       "color": "#00ff00",
       "width": 0.5,
       "style": "dotted"
+    },
+    "ADM_4": {
+      "show": false
     }
   },
-  "output_dir": "D:\\tmp",
+  "output_dir": "C:\\Code\\VB Travel\\mapTool_gui\\output",
   "styles": {
     "hauptland": {
       "fill": "#538B32",
