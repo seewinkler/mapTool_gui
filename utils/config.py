@@ -126,5 +126,5 @@ BASE_CONFIG = load_config()
 # ConfigManager initialisieren
 config_manager = ConfigManager(BASE_CONFIG)
 
-# Optionaler Shortcut für Scalebar-Settings
+# Shortcut für Scalebar-Settings
 SCALER = BASE_CONFIG.get("scalebar", {})
