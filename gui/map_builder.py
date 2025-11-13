@@ -5,17 +5,18 @@ from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
 from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
+from utils.constants import BOUNDARY_TO_COLUMN
 
+import pandas as pd
 
 def pixel_to_pt(px: float, dpi: float) -> float:
     """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
     return px * 72.0 / dpi
 
-
 class MapBuilder:
     """
     Baut eine Matplotlib-Figure aus Geodaten (Haupt- und Nebenländer),
-    inklusive Hintergrund, Layerfarben, Hervorhebungen und Maßstabsleiste.
+    inklusive Hintergrund, Layerfarben, Hervorhebungen, Grenzen und Maßstabsleiste.
     """
 
     def __init__(
@@ -58,18 +59,67 @@ class MapBuilder:
         if gdf is None or gdf.empty:
             return self._empty_figure()
 
-        main_gdf = gdf[gdf["__is_main"]]
-        sub_gdf = gdf[~gdf["__is_main"]]
+        # --- Typbereinigung ---
+        for col in ["__is_main", "__is_overlay", "highlight"]:
+            if col in gdf.columns and gdf[col].dtype != bool:
+                try:
+                    gdf[col] = gdf[col].astype(bool)
+                except Exception:
+                    gdf[col] = False
+
+        # --- Exklusive Aufteilung (fehlertolerant) ---
+        if "__is_main" in gdf.columns:
+            mask_main = gdf["__is_main"] == True
+        else:
+            mask_main = pd.Series(False, index=gdf.index)
+
+        if "__is_overlay" in gdf.columns:
+            mask_overlay = gdf["__is_overlay"] == True
+        else:
+            mask_overlay = pd.Series(False, index=gdf.index)
+
+        main_gdf = gdf[mask_main]
+        overlay_gdf = gdf[mask_overlay]
+        sub_gdf = gdf[~mask_main & ~mask_overlay]
+
+        # --- Kurze Übersicht ---
+        print(f"[INFO] Hauptland: {len(main_gdf)}, Nebenländer: {len(sub_gdf)}, Overlay: {len(overlay_gdf)}")
 
         fig, ax, dpi = self._create_figure_and_axis()
-
         self._apply_background(ax)
         lw_grenze, lw_highlight = self._get_linewidths(dpi)
 
+        # 1. Nebenländer
         self._plot_subcountries(ax, sub_gdf, lw_grenze)
-        self._set_bbox(ax, main_gdf)
+
+        # 2. Bounding Box auf Hauptland setzen
+        if not main_gdf.empty:
+            self._set_bbox(ax, main_gdf)
+
+        # 3. Hauptland
         self._plot_maincountry(ax, main_gdf, lw_grenze)
+
+        # 4. Highlights
         self._plot_highlights(ax, main_gdf, lw_highlight)
+
+        # 5. Overlay zuletzt – nur wenn vorhanden und nicht leer
+        if not overlay_gdf.empty:
+            style = self.cfg.get("overlay_style", {})
+            lw = style.get("line_width", 1.0)
+            overlay_gdf.plot(
+                ax=ax,
+                color=style.get("fill_color", "none"),
+                edgecolor=style.get("line_color", "black")
+                          if lw > 0 and style.get("show_lines", True)
+                          else "none",
+                linewidth=lw,
+                zorder=5
+            )
+
+        # 6. Admin-Level-Grenzen
+        self._plot_boundaries(ax, gdf, dpi)
+
+        # 7. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -138,16 +188,22 @@ class MapBuilder:
 
     def _plot_maincountry(self, ax, main_gdf, lw_grenze):
         """Zeichnet Hauptland."""
-        main_gdf.plot(
-            ax=ax,
-            color=self.colors.get("hauptland", "white"),
-            edgecolor=self.colors.get("grenze", "gray"),
-            linewidth=lw_grenze,
-        )
+        if not main_gdf.empty:
+            main_gdf.plot(
+                ax=ax,
+                color=self.colors.get("hauptland", "white"),
+                edgecolor=self.colors.get("grenze", "gray"),
+                linewidth=lw_grenze,
+            )
 
     def _plot_highlights(self, ax, main_gdf, lw_highlight):
         """Zeichnet Hervorhebungen."""
-        if self.hl_cfg.get("aktiv", False) and "highlight" in main_gdf:
+        if (
+            self.hl_cfg.get("aktiv", False)
+            and not main_gdf.empty
+            and "highlight" in main_gdf.columns
+            and main_gdf["highlight"].dtype == bool
+        ):
             to_high = main_gdf[main_gdf["highlight"]]
             if not to_high.empty:
                 to_high.plot(
@@ -158,26 +214,56 @@ class MapBuilder:
                     zorder=3,
                 )
 
+    def _plot_boundaries(self, ax, gdf, dpi):
+        """Zeichnet Admin-Level-Grenzen basierend auf config['boundaries']."""
+        boundaries_cfg = self.cfg.get("boundaries", {})
+        if not boundaries_cfg:
+            return
+
+        for level, opts in boundaries_cfg.items():
+            if not opts.get("show", False):
+                continue
+
+            col = BOUNDARY_TO_COLUMN.get(level)
+            if not col or col not in gdf.columns:
+                print(f"[DEBUG] Spalte für {level} nicht gefunden.")
+                continue
+
+            gdf_level = gdf.dropna(subset=[col])
+            if gdf_level.empty:
+                print(f"[DEBUG] Keine Features für {level} gefunden.")
+                continue
+
+            lw = pixel_to_pt(opts.get("width", 1.0), dpi)
+            color = opts.get("color", "#000000")
+            style = opts.get("style", "solid")
+
+            print(f"[DEBUG] Zeichne {len(gdf_level)} Features für {level} ({col})")
+
+            gdf_level.boundary.plot(
+                ax=ax,
+                edgecolor=color,
+                linewidth=lw,
+                linestyle=style,
+                zorder=6
+            )
+            
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
         current = self.cfg.get("scalebar", {}) or {}
         scalebar_cfg = {**self._scalebar_defaults, **current}
 
         if scalebar_cfg.get("show", False):
+            # Aktuelle Ausdehnung der Achse holen
             extent = [*ax.get_xlim(), *ax.get_ylim()]
+            # Temporäre Config mit zusammengeführter Scalebar-Config
             tmp_cfg = {**self.cfg, "scalebar": scalebar_cfg}
-            add_scalebar(ax, extent, self.crs, tmp_cfg,
-                         preview_mode=preview_mode,
-                         preview_scale=preview_scale)
-
-    # ------------------------------------------------------------
-    # Fallback
-    # ------------------------------------------------------------
-    def _empty_figure(self) -> plt.Figure:
-        """Erstellt eine leere Figure mit Hinweistext."""
-        fig = plt.figure(figsize=(self.width_px / 100, self.height_px / 100))
-        fig.text(
-            0.5, 0.5, "Keine Daten vorhanden",
-            ha="center", va="center"
-        )
-        return fig
+            # Maßstabsleiste hinzufügen
+            add_scalebar(
+                ax,
+                extent,
+                self.crs,
+                tmp_cfg,
+                preview_mode=preview_mode,
+                preview_scale=preview_scale
+            )

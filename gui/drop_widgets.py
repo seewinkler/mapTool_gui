@@ -4,6 +4,7 @@ from typing import List
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 
+
 class DropZone(QWidget):
     dropChanged = Signal()
 
@@ -43,11 +44,7 @@ class DropZone(QWidget):
         return self.paths
 
     def clear(self):
-        """
-        Leert die Drop-Zone vollständig:
-        - Entfernt alle gespeicherten Pfade
-        - Setzt den Label-Text zurück
-        """
+        """Leert die Drop-Zone vollständig."""
         self.paths.clear()
         self.label.setText("Keine Dateien")
 
@@ -86,13 +83,26 @@ class DropPanel(QWidget):
         self.drop_sub = DropZone("Nebenländer", allow_multiple=True, copy_to_temp=copy_to_temp)
         layout.addWidget(self.drop_sub)
 
+        # Overlay
+        if show_labels:
+            label_overlay = QLabel("📁 Overlay (Shapefile/GeoPackage)")
+            label_overlay.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label_overlay)
+
+        self.drop_overlay = DropZone("Overlay", allow_multiple=False, copy_to_temp=copy_to_temp)
+        layout.addWidget(self.drop_overlay)
+
     def get_main_paths(self) -> List[str]:
         return self.drop_main.get_paths()
 
     def get_sub_paths(self) -> List[str]:
         return self.drop_sub.get_paths()
 
+    def get_overlay_paths(self) -> List[str]:
+        return self.drop_overlay.get_paths()
+
     def clear(self):
-        """Leert beide Drop-Zonen."""
+        """Leert alle Drop-Zonen."""
         self.drop_main.clear()
         self.drop_sub.clear()
+        self.drop_overlay.clear()

@@ -8,10 +8,7 @@
       "matplotlib.font_manager"
     ]
   },
-  "hauptland": [
-    "ADM_ADM_0",
-    "ADM_ADM_1"
-  ],
+  "hauptland": [],
   "nebenlaender": "ADM_ADM_0",
   "farben": {
     "hauptland": "#538B32",
@@ -47,26 +44,69 @@
   },
   "scalebar": {
     "show": true,
+    "position": "bottom-right",
     "length_fraction": 0.07,
-    "position": "bottom-left",
-    "color": "white",
+    "min_length_px": 50,
+    "max_length_px": 200,
     "linewidth_px": 1.5,
     "font_px": 16,
-    "tick_fraction": 0.05,
-    "padding_px": 20,
-    "min_length_px": 80,
-    "max_length_px": 200
+    "color": "#FFFFFF",
+    "padding_px": 20
   },
   "highlight_cfg": {
     "aktiv": false,
-    "layer": "ADM_ADM_1",
+    "layer": null,
     "namen": []
   },
   "hide_cfg": {
     "aktiv": false,
-    "bereiche": {
-      "ADM_ADM_1": []
+    "bereiche": {}
+  },
+  "overlay_style": {
+    "fill_color": "#2896BA",
+    "line_color": "#0000ff",
+    "line_width": 0.0,
+    "show_lines": false
+  },
+  "boundaries": {
+    "ADM_0": {
+      "show": true,
+      "width": 1.0,
+      "style": "solid",
+      "color": "#000000"
+    },
+    "ADM_1": {
+      "show": true,
+      "width": 0.8,
+      "style": "dashed",
+      "color": "#000000"
+    },
+    "ADM_2": {
+      "show": false,
+      "color": "#00ff00",
+      "width": 0.5,
+      "style": "dotted"
+    },
+    "ADM_4": {
+      "show": false
     }
   },
-  "output_dir": "D:\\Gotti\\Code\\mapTool_gui\\output"
+  "output_dir": "C:\\Code\\VB Travel\\mapTool_gui\\output",
+  "styles": {
+    "hauptland": {
+      "fill": "#538B32",
+      "edge": "#000000",
+      "width": 1
+    },
+    "nebenland": {
+      "fill": "#969696",
+      "edge": "#000000",
+      "width": 1
+    },
+    "highlight": {
+      "fill": "#c8d429",
+      "edge": "#000000",
+      "width": 1
+    }
+  }
 }

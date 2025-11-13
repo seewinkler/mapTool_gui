@@ -95,8 +95,8 @@ class MapCanvas(QLabel):
 
         try:
             pil_img = self.composer.render(preview_mode=preview)
-        except Exception as e:
-            logging.error("Fehler beim Rendern der Karte: %s", e)
+        except Exception:
+            logging.exception("Fehler beim Rendern der Karte")
             self._show_placeholder()
             return
 
