@@ -27,7 +27,7 @@ class MainController:
         self.app = QApplication.instance() or QApplication(sys.argv)
         self.composer = composer
         self.view = view
-        self.config = view.config
+        self.config = CONFIG  # Verwende globale CONFIG (SESSION_CONFIG in main.py)
         self.reset_service = ResetService(self.composer, self.view)
 
 

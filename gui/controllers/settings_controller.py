@@ -1,6 +1,5 @@
 # gui/controllers/settings_controller.py
 
-from utils.config import save_config
 
 class SettingsController:
     def __init__(self, composer, view, config, main_ctrl=None):
@@ -37,7 +36,6 @@ class SettingsController:
             self.composer.cfg["scalebar"] = sb_cfg
 
         self.config["scalebar"] = sb_cfg
-        save_config(self.config)
 
         # Kein sofortiger Refresh mehr – nur als 'dirty' markieren
         if self.main_ctrl and hasattr(self.main_ctrl, "mark_preview_dirty"):

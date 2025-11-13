@@ -2,7 +2,6 @@
 
 import logging
 from PySide6.QtWidgets import QColorDialog
-from utils.config import save_config
 
 class AppearanceController:
     def __init__(self, composer, view, config, parent, main_ctrl=None):
@@ -21,9 +20,8 @@ class AppearanceController:
         self.composer.set_background(color=col.name())
         # Canvas-Hintergrund setzen (nur optisch, kein Render)
         self.view.map_canvas.set_background(color=col.name())
-        # persistent speichern
+        # Session-Config aktualisieren
         self.config["background"]["color"] = col.name()
-        save_config(self.config)
 
         # Vorschau nur als "dirty" markieren
         if self.main_ctrl:
@@ -36,9 +34,8 @@ class AppearanceController:
         self.composer.set_background(transparent=transparent)
         # Canvas-Hintergrund setzen (nur optisch, kein Render)
         self.view.map_canvas.set_background(transparent=transparent)
-        # persistent speichern
+        # Session-Config aktualisieren
         self.config["background"]["transparent"] = transparent
-        save_config(self.config)
 
         # Vorschau nur als "dirty" markieren
         if self.main_ctrl:

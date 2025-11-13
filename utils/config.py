@@ -1,5 +1,4 @@
 # utils/config.py
-
 import json
 import logging
 from logging.handlers import RotatingFileHandler
@@ -91,28 +90,6 @@ def load_config(path: Union[str, Path] = None) -> dict:
         config["epsg_list"] = []
 
     return config
-
-
-def save_config(cfg: dict, path: Union[str, Path] = None) -> None:
-    """
-    Speichert das Config-Dikt ohne 'epsg_list' in die JSON-Datei.
-    Wird in main_controller.py via save_config(CONFIG) aufgerufen.
-    """
-    cfg_path = Path(path) if path else DEFAULT_CONFIG_PATH
-    if not cfg_path.is_absolute():
-        cfg_path = BASE_DIR / cfg_path
-
-    # Verzeichnis sicherstellen
-    cfg_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Filter: epsg_list nicht mitschreiben
-    to_save = {k: v for k, v in cfg.items() if k != "epsg_list"}
-
-    # JSON mit Einrückung schreiben
-    cfg_path.write_text(
-        json.dumps(to_save, indent=2, ensure_ascii=False),
-        encoding="utf-8"
-    )
 
 
 # Beim Import sofort laden – CONFIG enthält alle Einträge aus config.json
