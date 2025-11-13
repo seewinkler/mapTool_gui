@@ -10,17 +10,6 @@
   },
   "hauptland": [],
   "nebenlaender": "ADM_ADM_0",
-  "farben": {
-    "hauptland": "#538B32",
-    "nebenland": "#969696",
-    "grenze": "#000000",
-    "highlight": "#c8d429"
-  },
-  "hervorhebung": {
-    "aktiv": true,
-    "layer": "ADM_ADM_1",
-    "namen": []
-  },
   "karte": {
     "breite": 800,
     "hoehe": 485,
@@ -34,10 +23,6 @@
   "background": {
     "color": "#2896BA",
     "transparent": true
-  },
-  "linien": {
-    "grenze_px": 1,
-    "highlight_px": 1
   },
   "assets": {
     "epsg_list": "assets/epsg_list.json"
@@ -68,29 +53,6 @@
     "line_width": 0.0,
     "show_lines": false
   },
-  "boundaries": {
-    "ADM_0": {
-      "show": true,
-      "width": 1.0,
-      "style": "solid",
-      "color": "#000000"
-    },
-    "ADM_1": {
-      "show": true,
-      "width": 0.8,
-      "style": "dashed",
-      "color": "#000000"
-    },
-    "ADM_2": {
-      "show": false,
-      "color": "#00ff00",
-      "width": 0.5,
-      "style": "dotted"
-    },
-    "ADM_4": {
-      "show": false
-    }
-  },
   "output_dir": "C:\\Code\\VB Travel\\mapTool_gui\\output",
   "styles": {
     "hauptland": {
@@ -107,6 +69,49 @@
       "fill": "#c8d429",
       "edge": "#000000",
       "width": 1
+    }
+  },
+  "outer_border": {
+    "color": "#000000",
+    "width": 1.0,
+    "style": "solid",
+    "alpha": 1.0
+  },
+  "boundaries": {
+    "ADM_0": {
+      "show": true,
+      "color": "#000000",
+      "width": 1.0,
+      "style": "solid",
+      "alpha": 1.0
+    },
+    "ADM_1": {
+      "show": true,
+      "color": "#000000",
+      "width": 0.8,
+      "style": "dashed",
+      "alpha": 1.0
+    },
+    "ADM_2": {
+      "show": false,
+      "color": "#00ff00",
+      "width": 0.5,
+      "style": "dotted",
+      "alpha": 1.0
+    },
+    "ADM_3": {
+      "show": false,
+      "color": "#000000",
+      "width": 0.5,
+      "style": "solid",
+      "alpha": 1.0
+    },
+    "ADM_4": {
+      "show": false,
+      "color": "#000000",
+      "width": 0.5,
+      "style": "solid",
+      "alpha": 1.0
     }
   }
 }

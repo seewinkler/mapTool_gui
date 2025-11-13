@@ -44,8 +44,8 @@ class MapBuilder:
         self.hide_cfg = hide_cfg or cfg.get("ausblenden", {})
         self.hl_cfg = hl_cfg or cfg.get("hervorhebung", {})
         self.background = cfg.get("background", {})
-        self.colors = cfg.get("farben", {})
-        self.lines_cfg = cfg.get("linien", {})
+        self.styles = cfg.get("styles", {})
+        self.boundaries_cfg = cfg.get("boundaries", {})
 
         # Scalebar-Defaults sichern
         self._scalebar_defaults = cfg.get("scalebar", {}).copy()
@@ -87,7 +87,8 @@ class MapBuilder:
 
         fig, ax, dpi = self._create_figure_and_axis()
         self._apply_background(ax)
-        lw_grenze, lw_highlight = self._get_linewidths(dpi)
+        lw_grenze = pixel_to_pt(self.styles.get("hauptland", {}).get("width", 1), dpi)
+        lw_highlight = pixel_to_pt(self.styles.get("highlight", {}).get("width", 1), dpi)
 
         # 1. Nebenländer
         self._plot_subcountries(ax, sub_gdf, lw_grenze)
@@ -174,8 +175,8 @@ class MapBuilder:
         if not sub_gdf.empty:
             sub_gdf.plot(
                 ax=ax,
-                color=self.colors.get("nebenland", "lightgray"),
-                edgecolor=self.colors.get("grenze", "gray"),
+                color=self.styles.get("nebenland", {}).get("fill", "lightgray"),
+                edgecolor=self.styles.get("nebenland", {}).get("edge", "gray"),
                 linewidth=lw_grenze,
             )
 
@@ -191,8 +192,8 @@ class MapBuilder:
         if not main_gdf.empty:
             main_gdf.plot(
                 ax=ax,
-                color=self.colors.get("hauptland", "white"),
-                edgecolor=self.colors.get("grenze", "gray"),
+                color=self.styles.get("hauptland", {}).get("fill", "white"),
+                edgecolor=self.styles.get("nebenland", {}).get("edge", "gray"),
                 linewidth=lw_grenze,
             )
 
@@ -208,8 +209,8 @@ class MapBuilder:
             if not to_high.empty:
                 to_high.plot(
                     ax=ax,
-                    color=self.colors.get("highlight", "red"),
-                    edgecolor=self.colors.get("grenze", "darkred"),
+                    color=self.styles.get("highlight", {}).get("fill", "red"),
+                    edgecolor=self.styles.get("highlight", {}).get("edge", "darkred"),
                     linewidth=lw_highlight,
                     zorder=3,
                 )

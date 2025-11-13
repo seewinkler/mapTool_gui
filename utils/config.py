@@ -57,45 +57,6 @@ def setup_logging(log_cfg: dict):
         logging.getLogger(module_name).setLevel(logging.WARNING)
 
 
-def migrate_config(cfg: dict) -> dict:
-    """
-    Migriert alte Keys ('farben', 'linien') in die neue Struktur ('styles', 'boundaries').
-    """
-    farben = cfg.get("farben", {})
-    linien = cfg.get("linien", {})
-
-    # Styles migrieren
-    if farben or linien:
-        styles = cfg.get("styles", {})
-
-        if "hauptland" in farben:
-            styles["hauptland"] = {
-                "fill": farben["hauptland"],
-                "edge": farben.get("grenze", "#000000"),
-                "width": linien.get("grenze_px", 1.0),
-            }
-        if "nebenland" in farben:
-            styles["nebenland"] = {
-                "fill": farben["nebenland"],
-                "edge": farben.get("grenze", "#000000"),
-                "width": linien.get("grenze_px", 1.0),
-            }
-        if "highlight" in farben:
-            styles["highlight"] = {
-                "fill": farben["highlight"],
-                "edge": farben.get("grenze", "#000000"),
-                "width": linien.get("highlight_px", 1.0),
-            }
-
-        cfg["styles"] = styles
-
-    # Boundaries nur anlegen, wenn noch nicht vorhanden
-    if "boundaries" not in cfg:
-        cfg["boundaries"] = {}
-
-    return cfg
-
-
 def load_config(path: Union[str, Path] = None) -> dict:
     """
     Lädt die JSON-Konfiguration, richtet Logging ein
@@ -108,9 +69,6 @@ def load_config(path: Union[str, Path] = None) -> dict:
         raise FileNotFoundError(f"Config nicht gefunden: {cfg_path}")
 
     config = json.loads(cfg_path.read_text(encoding="utf-8"))
-
-    # Migration anwenden
-    config = migrate_config(config)
 
     # Logging initialisieren
     log_cfg = config.setdefault("logging", {})
