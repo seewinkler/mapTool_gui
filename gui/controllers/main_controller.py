@@ -7,7 +7,7 @@ import logging
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QApplication
 
-from utils.config import CONFIG
+from utils.config import config_manager
 
 from .file_controller import FileController
 from .layer_controller import LayerController
@@ -27,7 +27,7 @@ class MainController:
         self.app = QApplication.instance() or QApplication(sys.argv)
         self.composer = composer
         self.view = view
-        self.config = CONFIG  # Verwende globale CONFIG (SESSION_CONFIG in main.py)
+        self.config = config_manager.get_session()  # Verwende globale CONFIG (SESSION_CONFIG in main.py)
         self.reset_service = ResetService(self.composer, self.view)
 
 
@@ -43,10 +43,10 @@ class MainController:
         """Erzeugt alle Subcontroller und gibt main_ctrl mit."""
         self.file_ctrl = FileController(self.composer, self.view, main_ctrl=self)
         self.layer_ctrl = LayerController(self.composer, self.view, main_ctrl=self)
-        self.settings_ctrl = SettingsController(self.composer, self.view, self.config, main_ctrl=self)
-        self.appearance_ctrl = AppearanceController(self.composer, self.view, self.config, self.view, main_ctrl=self)
-        self.export_ctrl = ExportController(self.composer, self.view, self.config, self.view, main_ctrl=self)
-        self.epsg_ctrl = EpsgController(self.composer, self.view, self.config, self.view, main_ctrl=self)
+        self.settings_ctrl = SettingsController(self.composer, self.view, main_ctrl=self)
+        self.appearance_ctrl = AppearanceController(self.composer, self.view, self.view, main_ctrl=self)
+        self.export_ctrl = ExportController(self.composer, self.view, self.view, main_ctrl=self)
+        self.epsg_ctrl = EpsgController(self.composer, self.view, self.view, main_ctrl=self)
 
     # ------------------------------------------------------------
     # Signal-Verbindungen

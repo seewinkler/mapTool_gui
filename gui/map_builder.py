@@ -188,13 +188,12 @@ class MapBuilder:
         ax.set_ylim(bbox[2], bbox[3])
 
     def _plot_maincountry(self, ax, main_gdf, lw_grenze):
-        """Zeichnet Hauptland."""
         if not main_gdf.empty:
             main_gdf.plot(
                 ax=ax,
                 color=self.styles.get("hauptland", {}).get("fill", "white"),
-                edgecolor=self.styles.get("nebenland", {}).get("edge", "gray"),
-                linewidth=lw_grenze,
+                edgecolor=None,  # Kein Rand
+                linewidth=0        # Rand komplett deaktivieren
             )
 
     def _plot_highlights(self, ax, main_gdf, lw_highlight):

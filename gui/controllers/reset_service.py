@@ -1,6 +1,5 @@
-# gui/controllers/reset_service.py
 import logging
-from utils.config import CONFIG
+from utils.config import config_manager
 
 class ResetService:
     def __init__(self, composer, view):
@@ -11,7 +10,9 @@ class ResetService:
         logging.info("Anwendung wird zurückgesetzt...")
 
         try:
-            defaults = CONFIG.copy()
+            # Session-Config zurücksetzen
+            config_manager.reset_session()
+            session_cfg = config_manager.get_session()  # Neue Session-Config nach Reset
 
             # Composer-Zustand zurücksetzen
             if hasattr(self.composer, "main_gpkg"):
@@ -19,26 +20,26 @@ class ResetService:
             if hasattr(self.composer, "sub_gpkgs"):
                 self.composer.sub_gpkgs = []
 
-            # Dimensionen
-            karte_cfg = defaults.get("karte", {})
+            # Dimensionen aus Session-Config
+            karte_cfg = session_cfg.get("karte", {})
             w = karte_cfg.get("breite", getattr(self.composer, "width_px", 800))
             h = karte_cfg.get("hoehe", getattr(self.composer, "height_px", 600))
             if hasattr(self.composer, "set_dimensions"):
                 self.composer.set_dimensions(w, h)
 
             # Hintergrund
-            bg = defaults.get("background", {"color": "#ffffff", "transparent": False})
+            bg = session_cfg.get("background", {"color": "#ffffff", "transparent": False})
             if hasattr(self.composer, "set_background"):
                 self.composer.set_background(color=bg.get("color"), transparent=bg.get("transparent"))
 
             # Scalebar
-            sb = defaults.get("scalebar", {"show": False})
+            sb = session_cfg.get("scalebar", {"show": False})
             if hasattr(self.composer, "set_scalebar"):
                 self.composer.set_scalebar(sb)
 
             # Layer-/Filter-Configs
             if hasattr(self.composer, "set_primary_layers"):
-                self.composer.set_primary_layers(defaults.get("primary_layers", []))
+                self.composer.set_primary_layers(session_cfg.get("primary_layers", []))
             if hasattr(self.composer, "set_hide"):
                 self.composer.set_hide({})
             if hasattr(self.composer, "set_highlight"):

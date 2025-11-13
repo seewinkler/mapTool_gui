@@ -79,7 +79,7 @@
   },
   "boundaries": {
     "ADM_0": {
-      "show": true,
+      "show": false,
       "color": "#000000",
       "width": 1.0,
       "style": "solid",

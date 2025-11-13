@@ -27,10 +27,11 @@ class MainWindow(QMainWindow):
     von Widget-Referenzen für den Controller.
     """
 
-    def __init__(self, composer: Any, config: Dict[str, Any]) -> None:
+    def __init__(self, composer: Any) -> None:
         super().__init__()
         self.composer = composer
-        self.config = config
+        from utils.config import config_manager
+        self.session_config = config_manager.get_session()
 
         # Temporärer Speicher für ausgewählte Overlay-Farben (erst bei Vorschau übernehmen)
         self._overlay_colors: Dict[str, str] = {}
@@ -46,13 +47,13 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------
     def _apply_initial_composer_settings(self) -> None:
         """Setzt Hintergrund und Dimensionen im Composer basierend auf CONFIG."""
-        bg_cfg = self.config.get("background", {})
+        bg_cfg = self.session_config.get("background", {})
         self.composer.set_background(
             color=bg_cfg.get("color", "#ffffff"),
             transparent=bg_cfg.get("transparent", False)
         )
 
-        karte_cfg = self.config.get("karte", {})
+        karte_cfg = self.session_config.get("karte", {})
         self.composer.set_dimensions(
             karte_cfg.get("breite", 800),
             karte_cfg.get("hoehe", 600)
@@ -62,7 +63,7 @@ class MainWindow(QMainWindow):
     # UI-Aufbau
     # ------------------------------------------------------------
     def _build_ui(self) -> None:
-        ui_cfg = self.config.get("ui", {})
+        ui_cfg = self.session_config.get("ui", {})
         self.setWindowTitle(ui_cfg.get("window_title", "mapTool GUI"))
         self.setMinimumSize(1100, 720)
 
@@ -85,7 +86,7 @@ class MainWindow(QMainWindow):
         left_col.addWidget(self.drop_panel, stretch=1)
 
         # Karten-Vorschau
-        karte_cfg = self.config.get("karte", {})
+        karte_cfg = self.session_config.get("karte", {})
         w = karte_cfg.get("breite", 800)
         h = karte_cfg.get("hoehe", 600)
         self.map_canvas = MapCanvas(self.composer, width=w, height=h)
@@ -168,7 +169,7 @@ class MainWindow(QMainWindow):
         extra_tab_layout.addWidget(self.layer_filter)
 
         # Grenzen
-        self.boundary_settings = BoundarySettingsGroup(self.config, levels=[])
+        self.boundary_settings = BoundarySettingsGroup(levels=[])
         extra_tab_layout.addWidget(self.boundary_settings)
 
         # Overlay-Optionen – erweitert
@@ -187,11 +188,11 @@ class MainWindow(QMainWindow):
         self.sp_overlay_line_width = QDoubleSpinBox()
         self.sp_overlay_line_width.setRange(0, 10)
         self.sp_overlay_line_width.setSingleStep(0.5)
-        self.sp_overlay_line_width.setValue(self.config.get("overlay_style", {}).get("line_width", 1.0))
+        self.sp_overlay_line_width.setValue(self.session_config.get("overlay_style", {}).get("line_width", 1.0))
 
         # Linien anzeigen
         self.cb_overlay_show_lines = QCheckBox("Linien anzeigen")
-        self.cb_overlay_show_lines.setChecked(self.config.get("overlay_style", {}).get("show_lines", True))
+        self.cb_overlay_show_lines.setChecked(self.session_config.get("overlay_style", {}).get("show_lines", True))
 
         ov_layout.addRow("Füllfarbe:", self.btn_overlay_fill)
         ov_layout.addRow("Linienfarbe:", self.btn_overlay_line)
@@ -298,7 +299,7 @@ class MainWindow(QMainWindow):
         # -----------------------------
         # Overlay-Style übernehmen
         # -----------------------------
-        style_cfg = dict(self.config.get("overlay_style", {}))
+        style_cfg = dict(self.session_config.get("overlay_style", {}))
 
         # Aus temporären Farbwahlen übernehmen (wenn gesetzt), sonst bisherige Werte behalten
         if "fill_color" in self._overlay_colors:
@@ -316,13 +317,13 @@ class MainWindow(QMainWindow):
         style_cfg["show_lines"] = self.cb_overlay_show_lines.isChecked()
 
         # Zurück in die Config
-        self.config["overlay_style"] = style_cfg
+        self.session_config["overlay_style"] = style_cfg
 
         # -----------------------------
         # Boundary-Settings übernehmen
         # -----------------------------
         if hasattr(self, "boundary_settings"):
-            # schreibt die Werte aus den Controls in self.config["boundaries"]
+            # schreibt die Werte aus den Controls in self.session_config["boundaries"]
             self.boundary_settings.apply_to_config()
 
         # -----------------------------
@@ -343,19 +344,19 @@ class MainWindow(QMainWindow):
         self._update_overlay_visibility()
 
         # Karten-Vorschau zurücksetzen
-        karte_cfg = self.config.get("karte", {})
+        karte_cfg = self.session_config.get("karte", {})
         w = karte_cfg.get("breite", 800)
         h = karte_cfg.get("hoehe", 600)
         self.map_canvas.setFixedSize(w, h)
         self.map_canvas.refresh(preview=True)
 
         # Hintergrund zurücksetzen
-        bg_cfg = self.config.get("background", {})
+        bg_cfg = self.session_config.get("background", {})
         self.cb_transp.setChecked(bg_cfg.get("transparent", False))
         self.btn_col.hide()
 
         # Scalebar zurücksetzen
-        sb = self.config.get("scalebar", {})
+        sb = self.session_config.get("scalebar", {})
         self.cb_sb_show.setChecked(sb.get("show", False))
         self.cmb_sb_pos.setCurrentText(sb.get("position", "bottom-right"))
 
@@ -373,7 +374,7 @@ class MainWindow(QMainWindow):
         self.cb_svg.setChecked(False)
 
         # Overlay-UI zurücksetzen (auf Config-Defaults)
-        style_cfg = self.config.get("overlay_style", {})
+        style_cfg = self.session_config.get("overlay_style", {})
         self._overlay_colors.clear()
         self.sp_overlay_line_width.setValue(style_cfg.get("line_width", 1.0))
         self.cb_overlay_show_lines.setChecked(style_cfg.get("show_lines", True))
@@ -391,7 +392,7 @@ class MainWindow(QMainWindow):
         self.log_widget.setReadOnly(True)
         handler = QTextEditLogger(self.log_widget)
         logging.getLogger().addHandler(handler)
-        lvl = self.config.get("logging", {}).get("level", "INFO").upper()
+        lvl = self.session_config.get("logging", {}).get("level", "INFO").upper()
         logging.getLogger().setLevel(getattr(logging, lvl, logging.INFO))
 
         # Log-Widget in der linken Spalte unter der Vorschau anzeigen
@@ -404,24 +405,24 @@ class MainWindow(QMainWindow):
     def _apply_config_defaults(self) -> None:
         """Überträgt Startwerte aus CONFIG in die UI-Elemente."""
         # Hintergrund
-        bg_cfg = self.config.get("background", {})
+        bg_cfg = self.session_config.get("background", {})
         self.cb_transp.setChecked(bg_cfg.get("transparent", False))
         self.btn_col.hide()
 
         # Scalebar
-        sb = self.config.get("scalebar", {})
+        sb = self.session_config.get("scalebar", {})
         self.cb_sb_show.setChecked(sb.get("show", False))
         self.cmb_sb_pos.setCurrentText(sb.get("position", "bottom-right"))
 
         # Dimensionen
-        karte = self.config.get("karte", {})
+        karte = self.session_config.get("karte", {})
         w = karte.get("breite", 800)
         h = karte.get("hoehe", 600)
         self.sp_w.setValue(w)
         self.sp_h.setValue(h)
 
         # Overlay-UI-Defaults aus Config laden
-        style_cfg = self.config.get("overlay_style", {})
+        style_cfg = self.session_config.get("overlay_style", {})
         self.sp_overlay_line_width.setValue(style_cfg.get("line_width", 1.0))
         self.cb_overlay_show_lines.setChecked(style_cfg.get("show_lines", True))
         # Farben bleiben bis zur Auswahl im Dialog in _overlay_colors leer

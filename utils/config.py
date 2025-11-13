@@ -1,9 +1,9 @@
-# utils/config.py
 import json
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Union
+import copy
 
 # Basis-Verzeichnis (Projekt-Root)
 BASE_DIR = Path(__file__).parent.parent
@@ -92,8 +92,39 @@ def load_config(path: Union[str, Path] = None) -> dict:
     return config
 
 
-# Beim Import sofort laden – CONFIG enthält alle Einträge aus config.json
-CONFIG = load_config()
+class ConfigManager:
+    """
+    Verwaltet Basis-Config (aus config.json) und Session-Config (Laufzeit).
+    - Basis-Config wird nur einmal geladen und nie verändert.
+    - Session-Config ist eine Kopie, die alle User-Änderungen enthält.
+    """
 
-# Globaler Shortcut für Scalebar-Settings, falls benötigt
-SCALER = CONFIG.get("scalebar", {})
+    def __init__(self, base_config: dict):
+        self._base = base_config
+        self._session = copy.deepcopy(base_config)
+
+    def get_session(self) -> dict:
+        """Gibt die aktuelle Session-Config zurück."""
+        return self._session
+
+    def update_session(self, key: str, value):
+        """Aktualisiert einen Wert in der Session-Config."""
+        self._session[key] = value
+
+    def reset_session(self):
+        """Setzt die Session-Config auf die Basis-Config zurück."""
+        self._session = copy.deepcopy(self._base)
+
+    def get_base(self) -> dict:
+        """Gibt die unveränderte Basis-Config zurück (nur lesen!)."""
+        return self._base
+
+
+# Basis-Config laden
+BASE_CONFIG = load_config()
+
+# ConfigManager initialisieren
+config_manager = ConfigManager(BASE_CONFIG)
+
+# Optionaler Shortcut für Scalebar-Settings
+SCALER = BASE_CONFIG.get("scalebar", {})

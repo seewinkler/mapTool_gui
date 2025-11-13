@@ -4,23 +4,27 @@ from PySide6.QtWidgets import (
     QGroupBox, QFormLayout, QCheckBox, QPushButton,
     QDoubleSpinBox, QComboBox, QColorDialog
 )
+from utils.config import config_manager
+
 
 class BoundarySettingsGroup(QGroupBox):
-    def __init__(self, config: dict, levels=None, parent=None):
+    def __init__(self, levels=None, parent=None):
         """
         Dynamische Gruppe für die Admin-Grenzen.
-        :param config: zentrale Config
         :param levels: Liste der Levels, z. B. ["ADM_1", "ADM_2"]
         """
         super().__init__("Grenzen", parent)
-        self.config = config
-        self.levels = levels or []   # jetzt dynamisch!
+        self.session_config = config_manager.get_session()
+        self.levels = levels or []
         self.controls = {}
 
         layout = QFormLayout(self)
 
+        # Linienstile aus Config oder Defaults
+        self.line_styles = self.session_config.get("boundary_styles", ["solid", "dashed", "dotted", "dashdot"])
+
         for level in self.levels:
-            cfg = self.config.get("boundaries", {}).get(level, {})
+            cfg = self.session_config.get("boundaries", {}).get(level, {})
             row = {}
 
             # Sichtbarkeit
@@ -30,6 +34,7 @@ class BoundarySettingsGroup(QGroupBox):
 
             # Farbe
             btn_color = QPushButton("Farbe wählen")
+            btn_color.setStyleSheet(f"background-color: {cfg.get('color', '#000000')};")
             btn_color.clicked.connect(lambda _, l=level: self._choose_color(l))
             row["color"] = btn_color
 
@@ -41,8 +46,8 @@ class BoundarySettingsGroup(QGroupBox):
 
             # Linienstil
             cmb_style = QComboBox()
-            cmb_style.addItems(["solid", "dashed", "dotted", "dashdot"])
-            cmb_style.setCurrentText(cfg.get("style", "solid"))
+            cmb_style.addItems(self.line_styles)
+            cmb_style.setCurrentText(cfg.get("style", self.line_styles[0]))
             row["style"] = cmb_style
 
             # GUI zusammenbauen
@@ -57,27 +62,24 @@ class BoundarySettingsGroup(QGroupBox):
         col = QColorDialog.getColor()
         if col.isValid():
             self.controls[level]["color"].setStyleSheet(f"background-color: {col.name()};")
-            self.config.setdefault("boundaries", {}).setdefault(level, {})["color"] = col.name()
+            self.controls[level]["color_value"] = col.name()  # Farbe speichern
+            self.session_config.setdefault("boundaries", {}).setdefault(level, {})["color"] = col.name()
 
     def apply_to_config(self):
-        """Überträgt die aktuellen Werte in self.config['boundaries']"""
-        self.config.setdefault("boundaries", {})
-
+        self.session_config.setdefault("boundaries", {})
+        # Alle bekannten Levels auf show=False setzen
+        for level in self.session_config["boundaries"].keys():
+            self.session_config["boundaries"][level]["show"] = False
+        # Dann die UI-Werte übernehmen
         for level, row in self.controls.items():
             if row["show"].isChecked():
-                # Sichtbar → alle Werte übernehmen
-                self.config["boundaries"][level] = {
+                self.session_config["boundaries"].setdefault(level, {}).update({
                     "show": True,
                     "width": row["width"].value(),
                     "style": row["style"].currentText(),
-                    "color": row["color"].property("color") or "#000000",
-                }
-            else:
-                # Nicht sichtbar → nur show=False setzen
-                self.config["boundaries"][level] = {
-                    "show": False
-                }
-                
+                    "color": row.get("color_value", "#000000"),
+                })
+
     def update_levels(self, levels):
         """Ersetzt die Controls basierend auf neuen Levels."""
         # alte Controls entfernen
@@ -91,7 +93,7 @@ class BoundarySettingsGroup(QGroupBox):
         self.levels = levels
 
         for level in self.levels:
-            cfg = self.config.get("boundaries", {}).get(level, {})
+            cfg = self.session_config.get("boundaries", {}).get(level, {})
             row = {}
 
             cb_show = QCheckBox("anzeigen")
@@ -109,8 +111,8 @@ class BoundarySettingsGroup(QGroupBox):
             row["width"] = sp_width
 
             cmb_style = QComboBox()
-            cmb_style.addItems(["solid", "dashed", "dotted", "dashdot"])
-            cmb_style.setCurrentText(cfg.get("style", "solid"))
+            cmb_style.addItems(self.line_styles)
+            cmb_style.setCurrentText(cfg.get("style", self.line_styles[0]))
             row["style"] = cmb_style
 
             self.layout().addRow(f"{level}:", cb_show)
