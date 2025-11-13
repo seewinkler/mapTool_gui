@@ -1,3 +1,5 @@
+# gui/map_builder.py
+
 import matplotlib.pyplot as plt
 from typing import Optional, List, Dict, Any
 from data_processing.layers import merge_hauptland_layers
