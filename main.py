@@ -1,7 +1,7 @@
-# main.py
+#main.py
+
 import sys
 import os
-import copy
 
 print("▶ Starte GUI-EntryPoint aus", __file__)
 
@@ -11,13 +11,15 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Logging & Config
+from utils.config import config_manager  # Zugriff auf ConfigManager
+
+# Basis-Config für Logging
+BASE_CONFIG = config_manager.get_base()
 from utils.logging_config import setup_logging
-from utils.config import CONFIG  # Original-Config laden
+setup_logging(BASE_CONFIG["logging"])  # Logging bleibt auf Basis der Original-Config
 
-# Session-Config erstellen (Kopie der Original-Config)
-SESSION_CONFIG = copy.deepcopy(CONFIG)
-
-setup_logging(CONFIG["logging"])  # Logging bleibt auf Basis der Original-Config
+# Session-Config abrufen
+SESSION_CONFIG = config_manager.get_session()
 
 # Sicherstellen, dass output_dir existiert
 DEFAULT_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
@@ -26,7 +28,7 @@ output_dir = SESSION_CONFIG.get("output_dir", DEFAULT_OUTPUT_DIR)
 if not os.path.exists(output_dir):
     print(f"⚠ Hinweis: Pfad '{output_dir}' existiert nicht. Fallback wird verwendet: {DEFAULT_OUTPUT_DIR}")
     output_dir = DEFAULT_OUTPUT_DIR
-    SESSION_CONFIG["output_dir"] = DEFAULT_OUTPUT_DIR
+    config_manager.update_session("output_dir", DEFAULT_OUTPUT_DIR)
 
 # Ordner anlegen, falls nicht vorhanden
 os.makedirs(output_dir, exist_ok=True)
@@ -44,7 +46,7 @@ def main():
     composer = MapComposer(SESSION_CONFIG, [])
 
     # MainWindow bekommt ebenfalls die Session-Config
-    window = MainWindow(composer, SESSION_CONFIG)
+    window = MainWindow(composer)
 
     controller = MainController(composer, window)
     sys.exit(controller.run())

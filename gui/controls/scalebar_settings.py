@@ -1,6 +1,7 @@
 # gui/controls/scalebar_settings.py
 from PySide6.QtWidgets import QGroupBox, QHBoxLayout, QCheckBox, QComboBox
 from PySide6.QtCore import Slot
+from utils.config import config_manager
 
 class ScalebarSettingsGroup(QGroupBox):
     """
@@ -15,7 +16,7 @@ class ScalebarSettingsGroup(QGroupBox):
         layout = QHBoxLayout(self)
 
         # Fallbacks aus Session-Config
-        sb_cfg = self.composer.config.get("scalebar", {})
+        sb_cfg = config_manager.get_session().get("scalebar", {})
         show_default = sb_cfg.get("show", False)
         pos_default = sb_cfg.get("position", "bottom-right")
 
@@ -42,13 +43,23 @@ class ScalebarSettingsGroup(QGroupBox):
     @Slot()
     def _on_show_changed(self):
         # Änderung nur in Session-Config
-        self.composer.config["scalebar"]["show"] = self.cb_sb_show.isChecked()
+        config_manager.get_session().setdefault("scalebar", {})["show"] = self.cb_sb_show.isChecked()
+        
+        # Composer aktualisieren
+        new_cfg = config_manager.get_session().get("scalebar", {})
+        self.composer.set_scalebar(new_cfg)
+
         if self.on_changed:
             self.on_changed()
 
     @Slot()
     def _on_position_changed(self):
         # Änderung nur in Session-Config
-        self.composer.config["scalebar"]["position"] = self.cmb_sb_pos.currentText()
+        config_manager.get_session().setdefault("scalebar", {})["position"] = self.cmb_sb_pos.currentText()
+        
+        # Composer aktualisieren
+        new_cfg = config_manager.get_session().get("scalebar", {})
+        self.composer.set_scalebar(new_cfg)
+
         if self.on_changed:
             self.on_changed()

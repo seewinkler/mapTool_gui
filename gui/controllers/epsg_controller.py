@@ -3,24 +3,25 @@
 import logging
 from PySide6.QtWidgets import QDialog
 from gui.auswahlfenster import AuswahlFenster
+from utils.config import config_manager
+
 
 class EpsgController:
-    def __init__(self, composer, view, config, parent, main_ctrl=None):
+    def __init__(self, composer, view, parent, main_ctrl=None):
         """
         :param composer: MapComposer-Instanz
         :param view: MainWindow-Instanz
-        :param config: Config-Dict
         :param parent: Parent-Widget für Dialoge
         :param main_ctrl: Optionaler Verweis auf MainController, um Preview als 'dirty' zu markieren
         """
         self.composer = composer
-        self.view     = view
-        self.config   = config
-        self.parent   = parent
+        self.view = view
+        self.parent = parent
         self.main_ctrl = main_ctrl
+        self.session_config = config_manager.get_session()
 
     def select_epsg(self):
-        epsg_list = self.config.get("epsg_list", [])
+        epsg_list = self.session_config.get("epsg_list", [])
         dlg = AuswahlFenster(epsg_list, parent=self.parent)
         if dlg.exec() != QDialog.Accepted or not dlg.selected_entry:
             return

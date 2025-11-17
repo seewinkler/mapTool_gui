@@ -2,21 +2,21 @@
 
 from pathlib import Path
 from gui.map_composer import MapComposer
+from utils.config import config_manager
 
 class ExportController:
-    def __init__(self, composer: MapComposer, view, config: dict, parent, main_ctrl=None):
+    def __init__(self, composer: MapComposer, view, parent, main_ctrl=None):
         """
         :param composer: MapComposer-Instanz
         :param view: MainWindow-Instanz
-        :param config: Config-Dict
         :param parent: Parent-Widget für Dialoge
         :param main_ctrl: Optionaler Verweis auf MainController
         """
         self.composer = composer
         self.view = view
-        self.config = config
         self.parent = parent
         self.main_ctrl = main_ctrl
+        self.session_config = config_manager.get_session()
 
     def render_clicked(self) -> None:
         # 1) Export-Formate sammeln
@@ -33,13 +33,14 @@ class ExportController:
         self.composer.set_dimensions(w, h)
 
         # 3) Speichern per Save-Dialog, öffnet danach den Ordner
+        initial_dir = self.session_config.get("output_dir", "output")
         saved_path = self.composer.compose_and_save_dialog(
             parent=self.parent,
-            initial_dir=self.config.get("output_dir", "output")
+            initial_dir=initial_dir
         )
         if saved_path:
             # Optional: zuletzt gewählten Ordner merken
-            self.config["output_dir"] = str(saved_path.parent)
+            self.session_config["output_dir"] = str(saved_path.parent)
 
         # 4) Kein automatischer Vorschau-Refresh mehr
         #    Stattdessen Dirty-Flag zurücksetzen, da Export auf finalen Daten basiert

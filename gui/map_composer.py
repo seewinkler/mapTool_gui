@@ -14,7 +14,6 @@ from gui.map_builder import MapBuilder
 from gui.map_exporter import MapExporter
 from utils.layer_selector import get_simplest_layer
 
-
 class MapComposer:
     """
     Zentrale Klasse für den Kartenaufbau.
@@ -28,31 +27,32 @@ class MapComposer:
         primary_layers: List[str],
         crs: Optional[str] = None
     ) -> None:
-        self.config = config
-        self.crs = crs or config.get("crs", "EPSG:3857")
+        from utils.config import config_manager
+        self.session_config = config_manager.get_session()
+        self.crs = crs or self.session_config.get("crs", "EPSG:3857")
 
         # Dimensionen
-        karte_cfg = config.get("karte", {})
-        ui_cfg = config.get("ui", {})
+        karte_cfg = self.session_config.get("karte", {})
+        ui_cfg = self.session_config.get("ui", {})
         self.width_px = karte_cfg.get("breite", ui_cfg.get("default_width", 800))
         self.height_px = karte_cfg.get("hoehe", ui_cfg.get("default_height", 600))
 
         # Scalebar
-        self.scalebar_cfg = config.get("scalebar", {"show": False})
+        self.scalebar_cfg = self.session_config.get("scalebar", {"show": False})
 
         # Hintergrund
-        bg_cfg = config.get("background", {})
+        bg_cfg = self.session_config.get("background", {})
         self.background_cfg = {
             "color": bg_cfg.get("color", "#ffffff"),
             "transparent": bg_cfg.get("transparent", False),
         }
 
         # Export-Formate – Fallback, falls leer
-        self.export_formats = config.get("export", {}).get("formats") or ["png"]
+        self.export_formats = self.session_config.get("export", {}).get("formats") or ["png"]
 
         # Hide- und Highlight-Configs
-        self.hide_cfg = config.get("hide_cfg", {}) or {"aktiv": False, "bereiche": {}}
-        self.hl_cfg = config.get("highlight_cfg", {}) or {"aktiv": False, "layer": None, "namen": []}
+        self.hide_cfg = self.session_config.get("hide_cfg", {}) or {"aktiv": False, "bereiche": {}}
+        self.hl_cfg = self.session_config.get("highlight_cfg", {}) or {"aktiv": False, "layer": None, "namen": []}
 
         # Primäre Layer
         self.primary_layers = list(primary_layers)
@@ -77,24 +77,26 @@ class MapComposer:
     def set_hide(self, hide_map: Dict[str, List[str]]) -> None:
         aktiv = any(hide_map.values())
         self.hide_cfg = {"aktiv": aktiv, "bereiche": hide_map}
-        self.config["hide_cfg"] = self.hide_cfg
+        self.session_config["hide_cfg"] = self.hide_cfg
 
     def set_highlight(self, layer: str, names: List[str]) -> None:
         aktiv = bool(names)
         self.hl_cfg = {"aktiv": aktiv, "layer": layer, "namen": names}
-        self.config["highlight_cfg"] = self.hl_cfg
+        self.session_config["highlight_cfg"] = self.hl_cfg
 
     def set_scalebar(self, cfg: Dict) -> None:
         from utils.config import SCALER
         SCALER.clear()
         SCALER.update(cfg)
         self.scalebar_cfg = dict(cfg)
+        self.session_config["scalebar"] = self.scalebar_cfg
 
     def set_background(self, color: Optional[str] = None, transparent: Optional[bool] = None) -> None:
         if color is not None:
             self.background_cfg["color"] = color
         if transparent is not None:
             self.background_cfg["transparent"] = transparent
+        self.session_config["background"] = self.background_cfg
 
     def set_dimensions(self, width: int, height: int) -> None:
         self.width_px = width
@@ -102,6 +104,7 @@ class MapComposer:
 
     def set_export_formats(self, formats: List[str]) -> None:
         self.export_formats = formats or ["png"]
+        self.session_config.setdefault("export", {})["formats"] = self.export_formats
 
     def set_overlay(self, overlay_path: Optional[str]) -> None:
         """Setzt oder entfernt den Overlay-Layer."""
@@ -214,7 +217,7 @@ class MapComposer:
     # Figure-Erstellung
     # ------------------------------------------------------------
     def _create_empty_figure(self) -> plt.Figure:
-        dpi = self.config.get("export", {}).get("dpi", 300)
+        dpi = self.session_config.get("export", {}).get("dpi", 300)
         fig_w = self.width_px / dpi
         fig_h = self.height_px / dpi
         fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
@@ -228,11 +231,16 @@ class MapComposer:
 
     def compose(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
         combined = self._get_combined_gdf()
+        # Immer neue Figure erzeugen
+        fig = self._create_empty_figure()
+        ax = fig.axes[0]
+        ax.clear()  # Wichtig: alte Inhalte entfernen
+
         if combined is None or combined.empty:
-            return self._create_empty_figure()
+            return fig
 
         builder = MapBuilder(
-            cfg=self.config,
+            cfg=self.session_config,
             main_gpkg=None,
             layers=self.primary_layers,
             crs=self.crs,
@@ -240,13 +248,13 @@ class MapComposer:
             hl_cfg=self.hl_cfg,
             gdf=combined
         )
-
         builder.width_px = self.width_px if not preview_mode else int(self.width_px * preview_scale)
-        builder.height_px = self.height_px if not preview_mode else int(self.height_px * preview_scale)
+        builder.height_px = self.height_px if not preview_mode else int(self.width_px * preview_scale)
         builder.background = self.background_cfg
         builder.scalebar_cfg = self.scalebar_cfg
 
-        return builder.build_figure(preview_mode=preview_mode, preview_scale=preview_scale)
+        # Übergib die neue Figure an den Builder
+        return builder.build_figure(fig=fig, preview_mode=preview_mode, preview_scale=preview_scale)
 
     # ------------------------------------------------------------
     # Export
@@ -294,7 +302,7 @@ class MapComposer:
                     pass
 
                 builder = MapBuilder(
-                    cfg=self.config,
+                    cfg=self.session_config,
                     main_gpkg=None,
                     layers=self.primary_layers,
                     crs=self.crs,
