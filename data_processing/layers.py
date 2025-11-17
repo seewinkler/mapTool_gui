@@ -27,6 +27,9 @@ def merge_hauptland_layers(
             gdf["__name_col"] = ""
             name_col = "__name_col"
 
+        # Spalte für den Ursprungslayer hinzufügen (Shapefile → kein Layername)
+        gdf["source_layer"] = "shapefile"
+
         # Hide nur anwenden, wenn Spalte existiert und Werte Strings sind
         if hide_cfg and hide_cfg.get("aktiv", False):
             bereiche = hide_cfg.get("bereiche", {})
@@ -69,6 +72,9 @@ def merge_hauptland_layers(
             if name_col is None:
                 gdf["__name_col"] = ""
                 name_col = "__name_col"
+
+            # Spalte für den Ursprungslayer hinzufügen
+            gdf["source_layer"] = layer
 
             # Hide nur anwenden, wenn Spalte existiert
             if hide_cfg and hide_cfg.get("aktiv", False):

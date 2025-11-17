@@ -4,9 +4,7 @@
     "file": "app.log",
     "maxBytes": 5242880,
     "backupCount": 3,
-    "suppress_modules": [
-      "matplotlib.font_manager"
-    ]
+    "suppress_modules": ["matplotlib.font_manager"]
   },
   "hauptland": [],
   "nebenlaender": "ADM_ADM_0",
@@ -47,18 +45,51 @@
     "aktiv": false,
     "bereiche": {}
   },
-  "overlay_style": {
-    "fill_color": "#2896BA",
-    "line_color": "none",
-    "line_width": 0.0,
-    "show_lines": false
-  },
+
   "output_dir": "C:\\Code\\VB Travel\\mapTool_gui\\output",
+
   "styles": {
     "hauptland": {
-      "fill": "#538B32",
-      "edge": "#000000",
-      "width": 1
+      "fill": "#538B32"
+    },
+    "hauptland_boundaries": {
+      "ADM_0": {
+        "show": true,
+        "color": "#000000",
+        "width": 1.0,
+        "style": "solid"
+      },
+      "ADM_1": {
+        "show": true,
+        "color": "#000000",
+        "width": 0.6,
+        "style": "solid"
+      },
+      "ADM_2": {
+        "show": false,
+        "color": "#000000",
+        "width": 0.3,
+        "style": "solid"
+      },
+      "ADM_3": {
+        "show": false,
+        "color": "#000000",
+        "width": 0.2,
+        "style": "solid"
+      },
+      "ADM_4": {
+        "show": false,
+        "color": "#000000",
+        "width": 0.1,
+        "style": "solid"
+      },
+      "outer_border": {
+        "color": "#000000",
+        "width": 1.0,
+        "style": "solid",
+        "alpha": 1.0,
+        "zorder": 999
+      }
     },
     "nebenland": {
       "fill": "#969696",
@@ -69,49 +100,12 @@
       "fill": "#c8d429",
       "edge": "#c8d429",
       "width": 1
-    }
-  },
-  "outer_border": {
-    "color": "#000000",
-    "width": 1.0,
-    "style": "solid",
-    "alpha": 1.0
-  },
-  "boundaries": {
-    "ADM_0": {
-      "show": false,
-      "color": "#000000",
-      "width": 1.0,
-      "style": "solid",
-      "alpha": 1.0
     },
-    "ADM_1": {
-      "show": true,
-      "color": "#000000",
-      "width": 0.8,
-      "style": "dashed",
-      "alpha": 1.0
-    },
-    "ADM_2": {
-      "show": false,
-      "color": "#00ff00",
-      "width": 0.5,
-      "style": "dotted",
-      "alpha": 1.0
-    },
-    "ADM_3": {
-      "show": false,
-      "color": "#000000",
-      "width": 0.5,
-      "style": "solid",
-      "alpha": 1.0
-    },
-    "ADM_4": {
-      "show": false,
-      "color": "#000000",
-      "width": 0.5,
-      "style": "solid",
-      "alpha": 1.0
+    "overlay": {
+      "fill_color": "#2896BA",
+      "line_color": "none",
+      "line_width": 0.0,
+      "show_lines": false
     }
   }
 }

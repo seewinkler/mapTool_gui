@@ -6,6 +6,7 @@ from data_processing.layers import merge_hauptland_layers
 from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
 from utils.constants import BOUNDARY_TO_COLUMN
+from utils.config import config_manager
 
 import pandas as pd
 
@@ -13,53 +14,50 @@ def pixel_to_pt(px: float, dpi: float) -> float:
     """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
     return px * 72.0 / dpi
 
-class MapBuilder:
-    """
-    Baut eine Matplotlib-Figure aus Geodaten (Haupt- und Nebenländer),
-    inklusive Hintergrund, Layerfarben, Hervorhebungen, Grenzen und Maßstabsleiste.
-    """
+from utils.config import config_manager
 
+class MapBuilder:
     def __init__(
         self,
-        cfg: Dict[str, Any],
+        cfg: Optional[Dict[str, Any]] = None,
         main_gpkg: Optional[str] = None,
         layers: Optional[List[str]] = None,
         crs: Optional[str] = None,
         hide_cfg: Optional[Dict[str, Any]] = None,
         hl_cfg: Optional[Dict[str, Any]] = None,
         gdf=None,
-    ) -> None:
-        self.cfg = cfg
+    ):
+        # Wenn keine Config übergeben wurde, Session-Config verwenden
+        self.cfg = config_manager.get_session()
+        self.styles = self.cfg.get("styles", {})
         self.main_gpkg = main_gpkg
         self.layers = layers or []
         self.crs = crs
         self._gdf = gdf
 
         # Karten-Abmessungen
-        karte = cfg.get("karte", {})
+        karte = self.cfg.get("karte", {})
         self.width_px = karte.get("breite", 800)
         self.height_px = karte.get("hoehe", 600)
 
         # Layer- und Darstellungsoptionen
-        self.hide_cfg = hide_cfg or cfg.get("ausblenden", {})
-        self.hl_cfg = hl_cfg or cfg.get("hervorhebung", {})
-        self.background = cfg.get("background", {})
-        self.styles = cfg.get("styles", {})
-        self.boundaries_cfg = cfg.get("boundaries", {})
+        self.hide_cfg = hide_cfg or self.cfg.get("ausblenden", {})
+        self.hl_cfg = hl_cfg or self.cfg.get("hervorhebung", {})
+        self.background = self.cfg.get("background", {})
+        self.boundaries_cfg = self.cfg.get("boundaries", {})
 
         # Scalebar-Defaults sichern
-        self._scalebar_defaults = cfg.get("scalebar", {}).copy()
-
+        self._scalebar_defaults = self.cfg.get("scalebar", {}).copy()
     # ------------------------------------------------------------
     # Hauptmethode
-    # ------------------------------------------------------------
-    def build_figure(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
+    # ------------------------------------------------------------  
+    def build_figure(self, fig=None, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
         """Erzeugt die Karte als Matplotlib-Figure."""
         gdf = self._get_geodataframe()
         if gdf is None or gdf.empty:
             return self._empty_figure()
 
-        # --- Typbereinigung ---
+        # Typbereinigung
         for col in ["__is_main", "__is_overlay", "highlight"]:
             if col in gdf.columns and gdf[col].dtype != bool:
                 try:
@@ -67,60 +65,46 @@ class MapBuilder:
                 except Exception:
                     gdf[col] = False
 
-        # --- Exklusive Aufteilung (fehlertolerant) ---
-        if "__is_main" in gdf.columns:
-            mask_main = gdf["__is_main"] == True
-        else:
-            mask_main = pd.Series(False, index=gdf.index)
-
-        if "__is_overlay" in gdf.columns:
-            mask_overlay = gdf["__is_overlay"] == True
-        else:
-            mask_overlay = pd.Series(False, index=gdf.index)
-
+        # Exklusive Aufteilung
+        mask_main = gdf["__is_main"] == True if "__is_main" in gdf.columns else pd.Series(False, index=gdf.index)
+        mask_overlay = gdf["__is_overlay"] == True if "__is_overlay" in gdf.columns else pd.Series(False, index=gdf.index)
         main_gdf = gdf[mask_main]
         overlay_gdf = gdf[mask_overlay]
         sub_gdf = gdf[~mask_main & ~mask_overlay]
 
-        # --- Kurze Übersicht ---
         print(f"[INFO] Hauptland: {len(main_gdf)}, Nebenländer: {len(sub_gdf)}, Overlay: {len(overlay_gdf)}")
 
-        fig, ax, dpi = self._create_figure_and_axis()
+        # --- Figure und Axis vorbereiten ---
+        if fig is None:
+            fig, ax, dpi = self._create_figure_and_axis()
+        else:
+            ax = fig.axes[0] if fig.axes else fig.add_subplot(111)
+            dpi = fig.dpi
+            ax.clear()  # Wichtig: alte Inhalte entfernen
+
         self._apply_background(ax)
+
         lw_grenze = pixel_to_pt(self.styles.get("hauptland", {}).get("width", 1), dpi)
         lw_highlight = pixel_to_pt(self.styles.get("highlight", {}).get("width", 1), dpi)
 
-        # 1. Nebenländer
+        # Zeichnen
         self._plot_subcountries(ax, sub_gdf, lw_grenze)
-
-        # 2. Bounding Box auf Hauptland setzen
         if not main_gdf.empty:
             self._set_bbox(ax, main_gdf)
-
-        # 3. Hauptland
         self._plot_maincountry(ax, main_gdf, lw_grenze)
-
-        # 4. Highlights
         self._plot_highlights(ax, main_gdf, lw_highlight)
-
-        # 5. Overlay zuletzt – nur wenn vorhanden und nicht leer
         if not overlay_gdf.empty:
-            style = self.cfg.get("overlay_style", {})
+            style = self.cfg.get("styles", {}).get("overlay", {})
             lw = style.get("line_width", 1.0)
             overlay_gdf.plot(
                 ax=ax,
                 color=style.get("fill_color", "none"),
-                edgecolor=style.get("line_color", "black")
-                          if lw > 0 and style.get("show_lines", True)
-                          else "none",
+                edgecolor=style.get("line_color", "black") if lw > 0 and style.get("show_lines", True) else "none",
                 linewidth=lw,
                 zorder=5
             )
 
-        # 6. Admin-Level-Grenzen
         self._plot_boundaries(ax, gdf, dpi)
-
-        # 7. Maßstabsleiste
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -170,15 +154,17 @@ class MapBuilder:
     # ------------------------------------------------------------
     # Plot-Methoden
     # ------------------------------------------------------------
+        
     def _plot_subcountries(self, ax, sub_gdf, lw_grenze):
-        """Zeichnet Nebenländer."""
+        """Zeichnet Nebenländer ohne Rand."""
         if not sub_gdf.empty:
             sub_gdf.plot(
                 ax=ax,
                 color=self.styles.get("nebenland", {}).get("fill", "lightgray"),
-                edgecolor=self.styles.get("nebenland", {}).get("edge", "gray"),
-                linewidth=lw_grenze,
+                edgecolor=self.styles.get("nebenland",{}).get("edge", "#000000"),
+                linewidth=lw_grenze
             )
+
 
     def _set_bbox(self, ax, main_gdf):
         """Setzt Bounding Box basierend auf Hauptland."""
@@ -187,13 +173,15 @@ class MapBuilder:
         ax.set_xlim(bbox[0], bbox[1])
         ax.set_ylim(bbox[2], bbox[3])
 
+    
     def _plot_maincountry(self, ax, main_gdf, lw_grenze):
+        """Zeichnet Hauptland ohne Rand."""
         if not main_gdf.empty:
             main_gdf.plot(
                 ax=ax,
                 color=self.styles.get("hauptland", {}).get("fill", "white"),
                 edgecolor=None,  # Kein Rand
-                linewidth=0        # Rand komplett deaktivieren
+                linewidth=0      # Rand komplett deaktivieren
             )
 
     def _plot_highlights(self, ax, main_gdf, lw_highlight):
@@ -215,8 +203,8 @@ class MapBuilder:
                 )
 
     def _plot_boundaries(self, ax, gdf, dpi):
-        """Zeichnet Admin-Level-Grenzen basierend auf config['boundaries']."""
-        boundaries_cfg = self.cfg.get("boundaries", {})
+        """Zeichnet Admin-Level-Grenzen basierend auf styles['hauptland_boundaries']."""
+        boundaries_cfg = self.cfg.get("styles", {}).get("hauptland_boundaries", {})
         if not boundaries_cfg:
             return
 
@@ -226,27 +214,34 @@ class MapBuilder:
 
             col = BOUNDARY_TO_COLUMN.get(level)
             if not col or col not in gdf.columns:
-                print(f"[DEBUG] Spalte für {level} nicht gefunden.")
                 continue
 
-            gdf_level = gdf.dropna(subset=[col])
-            if gdf_level.empty:
-                print(f"[DEBUG] Keine Features für {level} gefunden.")
+            # Filter: Nur Hauptland + richtiger Layer
+            expected_layer = f"ADM_ADM_{level[-1]}"  # z.B. ADM_0 -> ADM_ADM_0
+            gdf_main_level = gdf[
+                (gdf["__is_main"] == True) &
+                (gdf["source_layer"] == expected_layer) &
+                gdf[col].notna()
+            ]
+
+            if gdf_main_level.empty:
                 continue
 
             lw = pixel_to_pt(opts.get("width", 1.0), dpi)
             color = opts.get("color", "#000000")
-            style = opts.get("style", "solid")
+            linestyle = opts.get("style", "solid")
 
-            print(f"[DEBUG] Zeichne {len(gdf_level)} Features für {level} ({col})")
-
-            gdf_level.boundary.plot(
+            gdf_main_level.boundary.plot(
                 ax=ax,
                 edgecolor=color,
                 linewidth=lw,
-                linestyle=style,
+                linestyle=linestyle,
                 zorder=6
             )
+
+        print("BOUNDARY CFG:", boundaries_cfg)
+    
+    
             
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""

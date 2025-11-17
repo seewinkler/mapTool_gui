@@ -88,6 +88,22 @@ def load_config(path: Union[str, Path] = None) -> dict:
             )
     else:
         config["epsg_list"] = []
+        
+    # Validierung der neuen Struktur
+    styles = config.get("styles")
+    if not styles:
+        raise ValueError("Config-Fehler: 'styles' fehlt in config.json")
+
+    required_keys = ["hauptland", "hauptland_boundaries", "nebenland", "highlight", "overlay"]
+    missing = [k for k in required_keys if k not in styles]
+    if missing:
+        raise ValueError(f"Config-Fehler: Folgende Keys fehlen in 'styles': {missing}")
+
+    # Prüfen, ob ADM-Level vorhanden sind
+    adm_levels = ["ADM_0", "ADM_1", "ADM_2", "ADM_3", "ADM_4"]
+    for lvl in adm_levels:
+        if lvl not in styles["hauptland_boundaries"]:
+            raise ValueError(f"Config-Fehler: '{lvl}' fehlt in 'hauptland_boundaries'")
 
     return config
 

@@ -217,7 +217,7 @@ class MapComposer:
     # Figure-Erstellung
     # ------------------------------------------------------------
     def _create_empty_figure(self) -> plt.Figure:
-        dpi = self.self.session_config.get("export", {}).get("dpi", 300)
+        dpi = self.session_config.get("export", {}).get("dpi", 300)
         fig_w = self.width_px / dpi
         fig_h = self.height_px / dpi
         fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
@@ -231,8 +231,13 @@ class MapComposer:
 
     def compose(self, preview_mode: bool = False, preview_scale: float = 0.5) -> plt.Figure:
         combined = self._get_combined_gdf()
+        # Immer neue Figure erzeugen
+        fig = self._create_empty_figure()
+        ax = fig.axes[0]
+        ax.clear()  # Wichtig: alte Inhalte entfernen
+
         if combined is None or combined.empty:
-            return self._create_empty_figure()
+            return fig
 
         builder = MapBuilder(
             cfg=self.session_config,
@@ -243,13 +248,13 @@ class MapComposer:
             hl_cfg=self.hl_cfg,
             gdf=combined
         )
-
         builder.width_px = self.width_px if not preview_mode else int(self.width_px * preview_scale)
-        builder.height_px = self.height_px if not preview_mode else int(self.height_px * preview_scale)
+        builder.height_px = self.height_px if not preview_mode else int(self.width_px * preview_scale)
         builder.background = self.background_cfg
         builder.scalebar_cfg = self.scalebar_cfg
 
-        return builder.build_figure(preview_mode=preview_mode, preview_scale=preview_scale)
+        # Übergib die neue Figure an den Builder
+        return builder.build_figure(fig=fig, preview_mode=preview_mode, preview_scale=preview_scale)
 
     # ------------------------------------------------------------
     # Export
