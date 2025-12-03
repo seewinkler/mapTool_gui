@@ -84,6 +84,7 @@
         "style": "solid"
       },
       "outer_border": {
+        "show": true,
         "color": "#000000",
         "width": 1.0,
         "style": "solid",

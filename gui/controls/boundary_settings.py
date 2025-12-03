@@ -70,14 +70,26 @@ class BoundarySettingsGroup(QGroupBox):
             self.session_config["styles"]["hauptland_boundaries"][level]["color"] = col.name()
 
     def apply_to_config(self):
-        # NEU: Keine alte Struktur mehr, direkt in styles -> hauptland_boundaries
+        # ADM-Level-Grenzen aktualisieren
         for level, row in self.controls.items():
+            # Farbe aus Farbwähler oder Fallback
+            color = row.get("color_value") or \
+                    getattr(row.get("color"), "currentColor", None) or \
+                    self.session_config["styles"]["hauptland_boundaries"][level].get("color", "#000000")
+
             self.session_config["styles"]["hauptland_boundaries"][level].update({
                 "show": row["show"].isChecked(),
                 "width": row["width"].value(),
                 "style": row["style"].currentText(),
-                "color": row.get("color_value", self.session_config["styles"]["hauptland_boundaries"][level]["color"]),
+                "color": color,
             })
+
+        # Außengrenze-Checkbox (falls vorhanden)
+        if hasattr(self, "cb_outer_border"):
+            outer_cfg = self.session_config["styles"]["hauptland_boundaries"].get("outer_border", {})
+            outer_cfg["show"] = self.cb_outer_border.isChecked()
+            self.session_config["styles"]["hauptland_boundaries"]["outer_border"] = outer_cfg
+
 
     def update_levels(self, levels):
         """Ersetzt die Controls basierend auf neuen Levels."""

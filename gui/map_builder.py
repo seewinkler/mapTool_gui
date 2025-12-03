@@ -7,8 +7,9 @@ from data_processing.crs import compute_bbox
 from utils.scalebar import add_scalebar
 from utils.constants import BOUNDARY_TO_COLUMN
 from utils.config import config_manager
-
+from shapely.ops import unary_union
 import pandas as pd
+import geopandas as gpd
 
 def pixel_to_pt(px: float, dpi: float) -> float:
     """Konvertiert Pixel in Points (für Matplotlib-Linienbreiten)."""
@@ -106,6 +107,9 @@ class MapBuilder:
 
         self._plot_boundaries(ax, gdf, dpi)
         self._add_scalebar(ax, preview_mode=preview_mode, preview_scale=preview_scale)
+        
+        # Außengrenze zeichnen (falls aktiviert)
+        self._plot_outer_boundary(ax, gdf, dpi)
 
         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         return fig
@@ -242,6 +246,56 @@ class MapBuilder:
         print("BOUNDARY CFG:", boundaries_cfg)
     
     
+    def _plot_outer_boundary(self, ax, gdf, dpi):
+        """
+        Zeichnet eine neue Außengrenze basierend auf dem Hauptland (ohne Overlay und Nebenländer).
+        """
+        outer_cfg = (
+            self.cfg.get("styles", {})
+            .get("hauptland_boundaries", {})
+            .get("outer_border", {})
+        )
+        if not outer_cfg or not outer_cfg.get("show", False):
+            return
+
+        # Nur Hauptland (Overlay und Nebenländer ignorieren)
+        mask_main = gdf["__is_main"] == True if "__is_main" in gdf.columns else pd.Series(False, index=gdf.index)
+        visible_gdf = gdf[mask_main & gdf.geometry.notna()]
+
+        if visible_gdf.empty:
+            print("[WARN] Keine Geometrien für Außengrenze.")
+            return
+
+        merged_geom = unary_union(visible_gdf.geometry)
+
+        if merged_geom.is_empty or merged_geom.boundary is None:
+            print("[WARN] Keine gültige Außengrenze berechenbar.")
+            return
+
+        outer_boundary = merged_geom.boundary
+        if outer_boundary.is_empty:
+            print("[WARN] Außengrenze ist leer.")
+            return
+
+        # Stil aus Config
+        color = outer_cfg.get("color", "#000000")
+        lw_px = outer_cfg.get("width", 1.0)
+        lw_pt = pixel_to_pt(lw_px, dpi)
+        linestyle = outer_cfg.get("style", "solid")
+        alpha = outer_cfg.get("alpha", 1.0)
+        zorder = outer_cfg.get("zorder", 999)
+
+        # Zeichnen mit Fallback
+        if outer_boundary.geom_type == "MultiLineString":
+            for line in outer_boundary.geoms:
+                x, y = line.xy
+                ax.plot(x, y, color=color, linewidth=lw_pt, linestyle=linestyle, alpha=alpha, zorder=zorder)
+        elif outer_boundary.geom_type == "LineString":
+            x, y = outer_boundary.xy
+            ax.plot(x, y, color=color, linewidth=lw_pt, linestyle=linestyle, alpha=alpha, zorder=zorder)
+        else:
+            print(f"[WARN] Unerwarteter Geometrietyp: {outer_boundary.geom_type}")
+
             
     def _add_scalebar(self, ax, preview_mode: bool = False, preview_scale: float = 0.5):
         """Fügt Maßstabsleiste hinzu, falls aktiviert."""
